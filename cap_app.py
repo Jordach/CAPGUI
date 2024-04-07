@@ -229,6 +229,9 @@ with gr.Blocks(title="CAP App", analytics_enabled=False, css="custom_css.css") a
 					gr.Markdown("**20GB of space is required on the destination storage device.**")
 					gr.Markdown("**Clicking Install will save all unsaved ComfyUI setting changes.**")
 					def comfy_install_hook(comfy_addr, comfy_port, comfy_path):
+						if comfy_path.find("~") > -1:
+							raise gr.Error("DO NOT USE SHELL/HOME EXPANSION CHARACTERS!")
+
 						comfy_connector_changed = False
 						if comfy_addr != cap_util.gui_default_settings["comfy_address"]:
 							comfy_connector_changed = True
