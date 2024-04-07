@@ -105,7 +105,8 @@ def save_config():
 	if os.path.exists("config.yaml"):
 		with open("config.yaml", "r", encoding="utf-8") as config:
 			old_default_settings = yaml.safe_load(config)
-
+			if not os.path.exists("log/"):
+				os.makedirs("log/")
 			current_date = datetime.datetime.now()
 			with open(f"log/config_{current_date.strftime('%Y-%m-%d')}.yaml", "w", encoding="utf-8") as backup:
 				yaml.dump(old_default_settings, backup)
