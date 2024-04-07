@@ -1,0 +1,10 @@
+div.gradio-container {
+    max-width: unset !important;
+    padding: var(--size-2) var(--size-2) !important;
+}
+
+@media screen and (min-width: 2500px) {
+    #txt2img_gallery, #img2img_gallery {
+        min-height: 70vh !important;
+    }
+}
