@@ -21,7 +21,7 @@ try:
 	cap_util.ws.connect(f"ws://{cap_util.gui_default_settings['comfy_address']}:{cap_util.gui_default_settings['comfy_port']}/ws?clientId={cap_util.gui_default_settings['comfy_uuid']}")
 except Exception as e:
 	working_websocket = False
-	print(e)
+	raise e
 
 # Memorise a list of checkpoints with their partial paths inside the comfy folders
 if cap_util.gui_default_settings["comfy_path"] != "no_path":
@@ -89,20 +89,17 @@ with gr.Blocks(title="CAP App", analytics_enabled=False, css="custom_css.css") a
 		model_rescan_button.click(model_rescan_hook, inputs=[backend_dropdown], outputs=[stage_c_ckpt, stage_b_ckpt, clip_ckpt])
 
 		def restart_websocket():
-			cap_util.ws.recv()
 			comfy_ws_addr = cap_util.get_websocket_address()
-			if cap_util.ws.connected:
-				cap_util.ws.close()
-				try:
-					cap_util.ws.connect(comfy_ws_addr)
-				except:
-					raise gr.Error("Failed to connect to ComfyUI.")
-			else:
-				cap_util.ws.close()
-				try:
-					cap_util.ws.connect(comfy_ws_addr)
-				except:
-					raise gr.Error("Failed to connect to ComfyUI.")
+			try:
+				cap_util.ws.ping()
+			except:
+				pass
+
+			cap_util.ws.close()
+			try:
+				cap_util.ws.connect(comfy_ws_addr)
+			except:
+				raise gr.Error("ComfyUI does not appear to be available at that address and port.\nTry checking ComfyUI's settings.")
 			gr.Info("Successfully reconnected to ComfyUI!")
 
 		restart_socket_button.click(restart_websocket, inputs=None, outputs=None)
@@ -245,14 +242,10 @@ with gr.Blocks(title="CAP App", analytics_enabled=False, css="custom_css.css") a
 
 						if comfy_connector_changed:
 							cap_util.ws.close()
-							working_websocket = True
-							try:
-								cap_util.ws.connect(f"ws://{cap_util.gui_default_settings['comfy_address']}:{cap_util.gui_default_settings['comfy_port']}/ws?clientId={cap_util.gui_default_settings['comfy_uuid']}")
+							try:								
+								cap_util.ws.connect(cap_util.get_websocket_address())
 							except Exception as e:
-								working_websocket = False
-
-							if not working_websocket:
-								raise gr.Error("Invalid ComfyUI port and/or address.")
+								raise gr.Error("Invalid ComfyUI port and/or address - cannot connect.")
 						
 						rescan_model_folders = False
 						global clip_models

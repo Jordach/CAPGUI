@@ -338,32 +338,32 @@ def process_basic_txt2img(pos, neg, steps_c, seed_c, width, height, cfg_c, batch
 
 	# This is for saving images so they retain their metadata
 	json_workflow = json.dumps(workflow).encode('utf-8')
-	
-	if backend == "ComfyUI":
-		ws.recv()
-		if ws.connected:
-			timer_start = time.time()
-			gallery_images = gen_images_websocket(ws, workflow)
-			timer_finish = f"{time.time()-timer_start:.2f}"
-			gen_info  = f"Prompt: **{pos.strip()}**\n"
-			gen_info += f"\nNegative Prompt: **{neg.strip()}**\n"
-			gen_info += f"\nResolution: **{width}x{height}**\n"
-			gen_info += f"\nBatch Size: **{batch}**\n"
-			
-			gen_info += f"\nBase Steps: **{steps_c}**\n"
-			gen_info += f"\nBase Seed: **{workflow['3']['inputs']['seed']}**\n"
-			gen_info += f"\nBase CFG: **{cfg_c}**\n"
-			gen_info += f"\nBase Model: **{stage_c}**\n"
-			gen_info += f"\nCLIP Model: **{clip_model}**\n"
 
-			gen_info += f"\nRefiner Steps: **{steps_b}**\n"
-			gen_info += f"\nRefiner Seed: **{workflow['33']['inputs']['seed']}**\n"
-			gen_info += f"\nRefiner CFG: **{cfg_b}**\n"
-			gen_info += f"\nRefiner Model: **{stage_b}**\n"
-			# gen_info += f""
-			gen_info += f"\nTotal Time: **{timer_finish}s**"
-			return gallery_images, gen_info
-		else:
-			raise gr.Error("Connection to ComfyUI's API websocket lost. Try restarting both this GUI and ComfyUI.")
+	if backend == "ComfyUI":
+		try:
+			ws.ping()
+		except:
+			raise gr.Error("Connection to ComfyUI's API websocket lost. Try restarting both this GUI and the ComfyUI websocket.")
+		timer_start = time.time()
+		gallery_images = gen_images_websocket(ws, workflow)
+		timer_finish = f"{time.time()-timer_start:.2f}"
+		gen_info  = f"Prompt: **{pos.strip()}**\n"
+		gen_info += f"\nNegative Prompt: **{neg.strip()}**\n"
+		gen_info += f"\nResolution: **{width}x{height}**\n"
+		gen_info += f"\nBatch Size: **{batch}**\n"
+		
+		gen_info += f"\nBase Steps: **{steps_c}**\n"
+		gen_info += f"\nBase Seed: **{workflow['3']['inputs']['seed']}**\n"
+		gen_info += f"\nBase CFG: **{cfg_c}**\n"
+		gen_info += f"\nBase Model: **{stage_c}**\n"
+		gen_info += f"\nCLIP Model: **{clip_model}**\n"
+
+		gen_info += f"\nRefiner Steps: **{steps_b}**\n"
+		gen_info += f"\nRefiner Seed: **{workflow['33']['inputs']['seed']}**\n"
+		gen_info += f"\nRefiner CFG: **{cfg_b}**\n"
+		gen_info += f"\nRefiner Model: **{stage_b}**\n"
+		# gen_info += f""
+		gen_info += f"\nTotal Time: **{timer_finish}s**"
+		return gallery_images, gen_info
 	else:
 		raise gr.Error("CAP Feature Unavailable.")
