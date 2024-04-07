@@ -338,8 +338,9 @@ def process_basic_txt2img(pos, neg, steps_c, seed_c, width, height, cfg_c, batch
 
 	# This is for saving images so they retain their metadata
 	json_workflow = json.dumps(workflow).encode('utf-8')
-
+	
 	if backend == "ComfyUI":
+		ws.recv()
 		if ws.connected:
 			timer_start = time.time()
 			gallery_images = gen_images_websocket(ws, workflow)
