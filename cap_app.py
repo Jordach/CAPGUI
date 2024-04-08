@@ -110,8 +110,8 @@ with gr.Blocks(title="CAP App", analytics_enabled=False, css="custom_css.css") a
 				txt_send_to_img2img = gr.Button("Send to Image to Image", elem_id="s2img_txt2img")
 				txt_send_to_inpaint = gr.Button("Send to Inpainting", elem_id="s2inp_txt2img")
 		with gr.Row(elem_id="tabcontent"):
-			with gr.Column(scale=1, elem_id="gen_settings"):
-				with gr.Accordion(label="Base Settings:", open=False):
+			with gr.Column(scale=1, elem_id="settings"):
+				with gr.Accordion(label="Base Settings:", open=False, elem_id="accordion_base_settings"):
 					with gr.Column():
 						with gr.Row():
 							txt_stage_c_steps = gr.Slider(
@@ -166,7 +166,7 @@ with gr.Blocks(title="CAP App", analytics_enabled=False, css="custom_css.css") a
 									label="Compression:", interactive=True
 							)
 
-				with gr.Accordion(label="Refiner Settings:", open=False):
+				with gr.Accordion(label="Refiner Settings:", open=False, elem_id="accordion_refiner_settings"):
 					gr.Markdown("These settings are for the Stage B portion of Stable Cascade.\n\nIt's advised that you don't touch these - but if an image seems to come out wrong or has some kind of artifacting, try changing these settings.\n\nYou have been warned.")
 					txt_stage_b_seed = gr.Number(value=-1, minimum=-1, maximum=2147483647, precision=0, label="Seed:", scale=2, interactive=True)
 					txt_stage_b_cfg = gr.Slider(

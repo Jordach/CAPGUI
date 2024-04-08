@@ -15,7 +15,7 @@ function get_uiCurrentTab() {
 }
 
 function get_tab_window() {
-    return gradioApp().querySelector('.tabs > .tabitem[id^=tab_]:not([style*="display: none"])');
+	return gradioApp().querySelector('.tabs > .tabitem[id^=tab_]:not([style*="display: none"])');
 }
 
 document.addEventListener('keydown', function(e) {
@@ -24,7 +24,7 @@ document.addEventListener('keydown', function(e) {
 	const isAltKey = e.altKey;
 	const isEsc = e.key === 'Escape';
 	
-	const generateButton = get_tab_window().querySelector('#buttons > button[id^=generate_]');
+	const generateButton = get_tab_window().querySelector('#topbar > #buttons > button[id^=generate_]');
 	if (isCtrlKey && isEnter) {
 		e.preventDefault();
 		generateButton.click();

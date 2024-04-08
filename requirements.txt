@@ -1,4 +1,4 @@
-gradio
+gradio==4.14
 websocket-client
 pillow
 requests
