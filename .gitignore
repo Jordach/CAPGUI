@@ -166,3 +166,4 @@ generations/img2img/*
 generations/inpainting/*
 generations/txt2img/*
 flagged/
+tmp/

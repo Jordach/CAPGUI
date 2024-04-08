@@ -98,11 +98,12 @@ def load_config():
 			if isinstance(yaml_data, dict):
 				gui_default_settings |= yaml_data
 
-def save_config():
+def save_config(backup=False):
 	global gui_default_settings
 
 	# Only make a backup if the config file already exists
-	if os.path.exists("config.yaml"):
+	# and whether the changes recommend a backup.
+	if os.path.exists("config.yaml") and backup:
 		with open("config.yaml", "r", encoding="utf-8") as config:
 			old_default_settings = yaml.safe_load(config)
 			if not os.path.exists("log/"):

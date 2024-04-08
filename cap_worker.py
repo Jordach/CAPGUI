@@ -1,0 +1,1 @@
+# Redis connected CAP Worker that generates requests in the same way CAP App does when connected to ComfyUI over a websocket.

@@ -1,9 +1,6 @@
 import os
 import cap_util
-try:
-	import websocket #pip install websocket-client (https://github.com/websocket-client/websocket-client)
-except:
-	raise Exception("Please install websocket-client with:\npip install websocket-client")
+import websocket
 import uuid
 import gradio as gr
 
@@ -15,12 +12,10 @@ if "comfy_uuid" not in cap_util.gui_default_settings:
 	cap_util.gui_default_settings["comfy_uuid"] = str(uuid.uuid4())
 	cap_util.save_config()
 
-working_websocket = True
 cap_util.ws = websocket.WebSocket()
 try:
 	cap_util.ws.connect(f"ws://{cap_util.gui_default_settings['comfy_address']}:{cap_util.gui_default_settings['comfy_port']}/ws?clientId={cap_util.gui_default_settings['comfy_uuid']}")
 except Exception as e:
-	working_websocket = False
 	raise e
 
 # Memorise a list of checkpoints with their partial paths inside the comfy folders
@@ -215,76 +210,6 @@ with gr.Blocks(title="CAP App", analytics_enabled=False, css="custom_css.css") a
 		# Internal self contained tab functions go here:
 
 	with gr.Tab("Settings", elem_id="tab_settings"):
-		with gr.Accordion(label="ComfyUI Settings:", open=False):
-			gr.Markdown("The IP address of your ComfyUI instance.")
-			setting_comfyui_addr = gr.Textbox(value=cap_util.gui_default_settings["comfy_address"], label="ComfyUI IP Address:", interactive=True)
-			gr.Markdown("The networking port of your ComfyUI instance, this is the same as it's Node Editor webpage.")
-			setting_comfyui_port = gr.Textbox(value=cap_util.gui_default_settings["comfy_port"], label="ComfyUI Port:", interactive=True)
-			gr.Markdown("Where your local instance of ComfyUI is located.")
-			setting_comfyui_path = gr.Textbox(value=cap_util.gui_default_settings["comfy_path"], label="ComfyUI Path:", interactive=True)
-			with gr.Row():
-				with gr.Column():
-					setting_install_models = gr.Button("Install Cascade Models for ComfyUI.", variant="secondary")
-					gr.Markdown("Download and install all related models such as ControlNet, Stage Bs, Stage A and the base models.")
-					gr.Markdown("**20GB of space is required on the destination storage device.**")
-					gr.Markdown("**Clicking Install will save all unsaved ComfyUI setting changes.**")
-					def comfy_install_hook(comfy_addr, comfy_port, comfy_path):
-						if comfy_path.find("~") > -1:
-							raise gr.Error("DO NOT USE SHELL/HOME EXPANSION CHARACTERS!")
-
-						comfy_connector_changed = False
-						if comfy_addr != cap_util.gui_default_settings["comfy_address"]:
-							comfy_connector_changed = True
-						if comfy_port != cap_util.gui_default_settings["comfy_port"]:
-							comfy_connector_changed = True
-						
-						# Save ComfyUI changes
-						if comfy_connector_changed:
-							cap_util.gui_default_settings["comfy_address"] = comfy_addr
-							cap_util.gui_default_settings["comfy_port"] = comfy_port
-
-						if comfy_connector_changed:
-							cap_util.ws.close()
-							try:								
-								cap_util.ws.connect(cap_util.get_websocket_address())
-							except Exception as e:
-								raise gr.Error("Invalid ComfyUI port and/or address - cannot connect.")
-						
-						rescan_model_folders = False
-						global clip_models
-						global stage_b_models
-						global stage_c_models
-						clip_models, stage_b_models, stage_c_models = [], [], []
-						if comfy_path != cap_util.gui_default_settings["comfy_path"]:
-							rescan_model_folders = True
-							clip_models, stage_b_models, stage_c_models = cap_util.scan_for_comfy_models()
-						
-						cap_util.gui_default_settings["comfy_path"] = comfy_path
-						if rescan_model_folders or comfy_connector_changed:
-							cap_util.save_config()
-
-						cap_util.install_CAPGUI_nodes()
-						cap_util.download_cascade_models()
-						clip_models, stage_b_models, stage_c_models = cap_util.scan_for_comfy_models()
-
-						return gr.Dropdown(choices=stage_c_models), gr.Dropdown(choices=stage_b_models), gr.Dropdown(choices=clip_models)
-					setting_install_models.click(comfy_install_hook, 
-						inputs=[setting_comfyui_addr, setting_comfyui_port, setting_comfyui_path],
-						outputs=[stage_c_ckpt, stage_b_ckpt, clip_ckpt], 
-					)
-						
-				with gr.Column():
-					setting_rescan_local_models = gr.Button("Rescan for Cascade Models.", variant="secondary")
-					gr.Markdown("Rescans all models in the ComfyUI folders to be used. Does not save and use modified settings.\n\nSubfolders within the 'cascade' subfolder are not supported at this time.")
-					def rescan_local_models_hook():
-						global clip_models
-						global stage_b_models
-						global stage_c_models
-
-						clip_models, stage_b_models, stage_c_models = cap_util.scan_for_comfy_models()
-						return gr.Dropdown(choices=stage_c_models), gr.Dropdown(choices=stage_b_models), gr.Dropdown(choices=clip_models)
-					setting_rescan_local_models.click(rescan_local_models_hook, inputs=None, outputs=[stage_c_ckpt, stage_b_ckpt, clip_ckpt])
-
 		with gr.Accordion(label="Community AI Platform Settings:", open=False):
 			gr.Markdown("soon")
 		with gr.Accordion(label="Generation Settings:", open=False):
