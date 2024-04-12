@@ -39,7 +39,7 @@ goto :show_stdout_stderr
 set PYTHON="%VENV_DIR%\Scripts\Python.exe"
 echo venv %PYTHON%
 
-%PYTHON% cap_app.py
+%PYTHON% cap_app_install.py --gradio
 pause
 exit /b
 

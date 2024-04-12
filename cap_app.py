@@ -4,13 +4,7 @@ import websocket
 import uuid
 import gradio as gr
 
-cap_util.load_config()
-
-if "comfy_uuid" not in cap_util.gui_default_settings:
-	# This is more cosmetic in nature and just provides a manner in which to use ComfyUI
-	# without it forgetting who you are.
-	cap_util.gui_default_settings["comfy_uuid"] = str(uuid.uuid4())
-	cap_util.save_config()
+config_status = cap_util.load_config()
 
 cap_util.ws = websocket.WebSocket()
 try:
@@ -19,10 +13,6 @@ except Exception as e:
 	raise e
 
 # Memorise a list of checkpoints with their partial paths inside the comfy folders
-if cap_util.gui_default_settings["comfy_path"] != "no_path":
-	if os.path.exists(cap_util.gui_default_settings["comfy_path"]):
-		pass
-
 clip_models, stage_b_models, stage_c_models = cap_util.scan_for_comfy_models()
 
 with gr.Blocks(title="CAP App", analytics_enabled=False, css="custom_css.css") as app:
@@ -94,7 +84,7 @@ with gr.Blocks(title="CAP App", analytics_enabled=False, css="custom_css.css") a
 			try:
 				cap_util.ws.connect(comfy_ws_addr)
 			except:
-				raise gr.Error("ComfyUI does not appear to be available at that address and port.\nTry checking ComfyUI's settings.")
+				raise gr.Error("ComfyUI does not appear to be available at that address and port.\nTry checking settings or that ComfyUI is running.")
 			gr.Info("Successfully reconnected to ComfyUI!")
 
 		restart_socket_button.click(restart_websocket, inputs=None, outputs=None)
@@ -119,9 +109,9 @@ with gr.Blocks(title="CAP App", analytics_enabled=False, css="custom_css.css") a
 								maximum=cap_util.gui_default_settings["gen_c_steps_max"],
 								value=cap_util.gui_default_settings["gen_c_steps"],
 								step=cap_util.gui_default_settings["gen_c_steps_step"],
-								scale=10, label="Steps:", interactive=True,
+								scale=10, label="Base Steps:", interactive=True,
 							)
-							txt_stage_c_seed = gr.Number(value=-1, minimum=-1, maximum=2147483647, precision=0, label="Seed:", scale=2, interactive=True,)
+							txt_stage_c_seed = gr.Number(value=-1, minimum=-1, maximum=2147483647, precision=0, label="Base Seed:", scale=2, interactive=True,)
 							with gr.Row():
 								txt_stage_c_set_seed_rand = gr.Button("🎲", size="sm", scale=1, variant="secondary")
 								txt_stage_c_swap_aspects = gr.Button("🔀", size="sm", scale=1, variant="secondary")
@@ -133,7 +123,7 @@ with gr.Blocks(title="CAP App", analytics_enabled=False, css="custom_css.css") a
 								maximum=cap_util.gui_default_settings["gen_c_cfg_max"],
 								value=cap_util.gui_default_settings["gen_c_cfg"],
 								step=cap_util.gui_default_settings["gen_c_cfg_step"],
-								label="CFG:", interactive=True, scale=5
+								label="Base CFG:", interactive=True, scale=5
 							)
 							txt_stage_c_batch = gr.Slider(
 								minimum=cap_util.gui_default_settings["gen_batch_size_min"],
@@ -142,6 +132,14 @@ with gr.Blocks(title="CAP App", analytics_enabled=False, css="custom_css.css") a
 								step=cap_util.gui_default_settings["gen_batch_size_step"],
 								label="Batch Size:", interactive=True, scale=2
 							)
+							txt_stage_c_single_latent = gr.Slider(
+								minimum=0,
+								maximum=cap_util.gui_default_settings["gen_batch_size_max"]+1,
+								value=0, step=cap_util.gui_default_settings["gen_batch_size_step"],
+								info="When generating a batch, if this is set to 1, it will only generate the first image of that batch. Zero generates the whole batch.",
+								label="Select From Batch:"
+							)
+
 						with gr.Column(scale=4):
 							txt_stage_c_width = gr.Slider(
 								minimum=cap_util.gui_default_settings["gen_size_min"],
@@ -157,31 +155,42 @@ with gr.Blocks(title="CAP App", analytics_enabled=False, css="custom_css.css") a
 								step=cap_util.gui_default_settings["gen_size_step"],
 								label="Height:", interactive=True
 								)
-
+						
+						# with gr.Row():
 							txt_stage_c_compression = gr.Slider(
 									minimum=32,
-									maximum=42,
+									maximum=72,
+									info="The recommended default compression factor is 42. While greater compression factors reduce time to generate an image at lower resolutios, this also ruins the image, but enables higher resolutions.",
 									value=cap_util.gui_default_settings["gen_compression"],
 									step=1,
 									label="Compression:", interactive=True
 							)
 
+							txt_stage_c_shift = gr.Slider(
+								minimum=cap_util.gui_default_settings["gen_c_shift_min"],
+								maximum=cap_util.gui_default_settings["gen_c_shift_max"],
+								value=cap_util.gui_default_settings["gen_c_shift"],
+								step=cap_util.gui_default_settings["gen_c_shift_step"],
+								label='"Shift"', interactive=True,
+								info='This value "shifts" the denoising process of Stage C, which can somewhat create seed variations.'
+							)
+
 				with gr.Accordion(label="Refiner Settings:", open=False, elem_id="accordion_refiner_settings"):
 					gr.Markdown("These settings are for the Stage B portion of Stable Cascade.\n\nIt's advised that you don't touch these - but if an image seems to come out wrong or has some kind of artifacting, try changing these settings.\n\nYou have been warned.")
 					txt_stage_b_seed = gr.Number(value=-1, minimum=-1, maximum=2147483647, precision=0, label="Seed:", scale=2, interactive=True)
-					txt_stage_b_cfg = gr.Slider(
-						minimum=cap_util.gui_default_settings["gen_b_cfg_min"],
-						maximum=cap_util.gui_default_settings["gen_b_cfg_max"],
-						value=cap_util.gui_default_settings["gen_b_cfg"],
-						step=cap_util.gui_default_settings["gen_b_cfg_step"],
-						label="Refiner Steps:", interactive=True
-					)
 					txt_stage_b_steps = gr.Slider(
 						minimum=cap_util.gui_default_settings["gen_b_steps_min"],
 						maximum=cap_util.gui_default_settings["gen_b_steps_max"],
 						value=cap_util.gui_default_settings["gen_b_steps"],
 						step=cap_util.gui_default_settings["gen_b_steps_step"],
 						label="Refiner Steps:", interactive=True
+					)
+					txt_stage_b_cfg = gr.Slider(
+						minimum=cap_util.gui_default_settings["gen_b_cfg_min"],
+						maximum=cap_util.gui_default_settings["gen_b_cfg_max"],
+						value=cap_util.gui_default_settings["gen_b_cfg"],
+						step=cap_util.gui_default_settings["gen_b_cfg_step"],
+						label="Refiner CFG:", interactive=True
 					)
 
 				with gr.Accordion(label="Extras:", open=False):
@@ -195,10 +204,11 @@ with gr.Blocks(title="CAP App", analytics_enabled=False, css="custom_css.css") a
 		# Internal self contained tab functions go here:
 		txt_stage_c_swap_aspects.click(cap_util.swap_width_height, inputs=[txt_stage_c_height, txt_stage_c_width], outputs=[txt_stage_c_height, txt_stage_c_width])
 		txt_generate.click(cap_util.process_basic_txt2img, inputs=[
-			txt_pos_prompt, txt_neg_prompt, txt_stage_c_steps, txt_stage_c_seed,
-			txt_stage_c_width, txt_stage_c_height, txt_stage_c_cfg, txt_stage_c_batch,
-			txt_stage_c_compression, txt_stage_b_seed, txt_stage_b_cfg, txt_stage_b_steps, 
-			stage_b_ckpt, stage_c_ckpt, clip_ckpt, backend_dropdown
+			txt_pos_prompt,          txt_neg_prompt,     txt_stage_c_steps,         txt_stage_c_seed,
+			txt_stage_c_width,       txt_stage_c_height, txt_stage_c_cfg,           txt_stage_c_batch,
+			txt_stage_c_compression, txt_stage_c_shift,  txt_stage_c_single_latent,
+			txt_stage_b_seed,        txt_stage_b_cfg,    txt_stage_b_steps,         stage_b_ckpt, 
+			stage_c_ckpt,            clip_ckpt,          backend_dropdown
 		], outputs=[txt_gallery, txt_gen_info_box])
 
 	with gr.Tab("Image to Image", elem_id="tab_img2img"):
@@ -250,4 +260,4 @@ def new_resp(*args, **kwargs):
 	return new_response
 
 gr.routes.templates.TemplateResponse = new_resp
-app.launch(server_port=6969, allowed_paths=[os.getcwd()])
+app.launch(server_port=6969, server_name="0.0.0.0", allowed_paths=[os.getcwd()])

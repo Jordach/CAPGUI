@@ -1,5 +1,6 @@
 import comfy
 import folder_paths
+import math
 
 class UNETLoaderCAP:
 	@classmethod
@@ -43,5 +44,5 @@ NODE_CLASS_MAPPINGS = {
 
 NODE_DISPLAY_NAME_MAPPINGS = {
 	"UNETLoaderCAPGUI": "CAPGUI API UNETLoader",
-	"CLIPLoaderCAPGUI": "CAPGUI API CLIPLoader"
+	"CLIPLoaderCAPGUI": "CAPGUI API CLIPLoader",
 }

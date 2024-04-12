@@ -34,6 +34,11 @@ gui_default_settings = {
 	"gen_c_steps_max": 150,
 	"gen_c_steps_step": 1,
 
+	"gen_c_shift": 2.0,
+	"gen_c_shift_min": 1.0,
+	"gen_c_shift_max": 12.0,
+	"gen_c_shift_step": 0.01,
+
 	"gen_c_cfg": 4.0,
 	"gen_c_cfg_min": 1.0,
 	"gen_c_cfg_max": 15.0,
@@ -97,6 +102,8 @@ def load_config():
 			# Only load it if it returns a dict
 			if isinstance(yaml_data, dict):
 				gui_default_settings |= yaml_data
+		return True
+	return False
 
 def save_config(backup=False):
 	global gui_default_settings
@@ -123,13 +130,6 @@ def get_websocket_address():
 
 def swap_width_height(a, b):
 	return copy.deepcopy(b), copy.deepcopy(a)
-
-def download_single_model(path, url):
-	model_data = requests.get(url, stream=True)
-	with open(path, "wb") as model:
-		for chunk in model_data.iter_content(chunk_size=(1024*1024)*64):
-			if chunk:
-				model.write(chunk)
 
 def scan_for_comfy_models():
 	global gui_default_settings
@@ -158,127 +158,6 @@ def scan_for_comfy_models():
 			if os.path.splitext(model)[1].lower() == ".safetensors":
 				stage_c_models.append(f"cascade/stage_c/{model}")
 	return clip_models, stage_b_models, stage_c_models
-
-def install_CAPGUI_nodes():
-	global gui_default_settings
-	custom_nodes = os.path.join(gui_default_settings["comfy_path"], "custom_nodes", "CAPGUI_Nodes")
-	if not os.path.exists(custom_nodes):
-		os.makedirs(custom_nodes)
-	shutil.copy(os.path.join("comfyui_files", "__init__.py"), os.path.join(custom_nodes, "__init__.py"))
-	gr.Info("ComfyUI Custom Nodes were installed - please restart ComfyUI to generate locally.")
-
-def download_cascade_models():
-	global gui_default_settings
-	clip_folder       = os.path.join(gui_default_settings["comfy_path"], "models", "clip",       "cascade")
-	controlnet_folder = os.path.join(gui_default_settings["comfy_path"], "models", "controlnet", "cascade")
-	unet_folder_b     = os.path.join(gui_default_settings["comfy_path"], "models", "unet",       "cascade", "stage_b")
-	unet_folder_c     = os.path.join(gui_default_settings["comfy_path"], "models", "unet",       "cascade", "stage_c")
-	vae_folder        = os.path.join(gui_default_settings["comfy_path"], "models", "vae",        "cascade")
-	
-	if not os.path.exists(clip_folder):
-		os.makedirs(clip_folder)
-	if not os.path.exists(controlnet_folder):
-		os.makedirs(controlnet_folder)
-	if not os.path.exists(unet_folder_b):
-		os.makedirs(unet_folder_b)
-	if not os.path.exists(unet_folder_c):
-		os.makedirs(unet_folder_c)
-	if not os.path.exists(vae_folder):
-		os.makedirs(vae_folder)
-
-	# Download CLIP models
-	base_clip_path = os.path.join(clip_folder, "stable_cascade_clip.safetensors")
-	clip_reso_path = os.path.join(clip_folder, "resonance_r1_eX_clip.safetensors")
-	print("Downloading CLIP models.")
-	if not os.path.isfile(base_clip_path):
-		try:
-			download_single_model(base_clip_path, "https://huggingface.co/stabilityai/stable-cascade/resolve/main/text_encoder/model.safetensors?download=true")
-		except Exception as e:
-			print(e)
-			raise gr.Error("Failed to download stable_cascade_clip.safetensors from Hugging Face - is there a working HTTP connection?")
-	gr.Info("CLIP models downloaded.")
-
-	# Download ControlNet Models:
-	print("Downloading ControlNet models.")
-	base_cn_canny_path = os.path.join(controlnet_folder, "cn_canny.safetensors")
-	base_cn_inpaint_path = os.path.join(controlnet_folder, "cn_inpainting.safetensors")
-	base_cn_super_res_path = os.path.join(controlnet_folder, "cn_super_resolution.safetensors")
-	if not os.path.isfile(base_cn_canny_path):
-		try:
-			download_single_model(base_cn_canny_path, "https://huggingface.co/stabilityai/stable-cascade/resolve/main/controlnet/canny.safetensors?download=true")
-		except:
-			raise gr.Error("Failed to download cn_canny.safetensors from Hugging Face - is there a working HTTP connection?")
-	
-	if not os.path.isfile(base_cn_inpaint_path):
-		try:
-			download_single_model(base_cn_inpaint_path, "https://huggingface.co/stabilityai/stable-cascade/resolve/main/controlnet/inpainting.safetensors?download=true")
-		except:
-			raise gr.Error("Failed to download cn_inpainting.safetensors from Hugging Face - is there a working HTTP connection?")
-	
-	if not os.path.isfile(base_cn_super_res_path):
-		try:
-			download_single_model(base_cn_super_res_path, "https://huggingface.co/stabilityai/stable-cascade/resolve/main/controlnet/super_resolution.safetensors?download=true")
-		except:
-			raise gr.Error("Failed to download cn_super_resolution.safetensors from Hugging Face - is there a working HTTP connection?")
-	gr.Info("ControlNet models downloaded.")
-
-	# Download Stage B models:
-	print("Downloading Refiner/Stage B models.")
-	base_stage_b_path      = os.path.join(unet_folder_b, "stage_b_bf16.safetensors")
-	base_stage_b_lite_path = os.path.join(unet_folder_b, "stage_b_lite_bf16.safetensors")
-	reso_stage_b_path      = os.path.join(unet_folder_b, "resonance_stage_b.safetensors")
-	reso_stage_b_lite_path = os.path.join(unet_folder_b, "resonance_stage_b_lite.safetensors")
-	if not os.path.isfile(base_stage_b_path):
-		try:
-			download_single_model(base_stage_b_path, "https://huggingface.co/stabilityai/stable-cascade/resolve/main/stage_b_bf16.safetensors?download=true")
-		except:
-			raise gr.Error("Failed to download .safetensors from Hugging Face - is there a working HTTP connection?")
-	
-	if not os.path.isfile(base_stage_b_lite_path):
-		try:
-			download_single_model(base_stage_b_lite_path, "https://huggingface.co/stabilityai/stable-cascade/resolve/main/stage_b_lite_bf16.safetensors?download=true")
-		except:
-			raise gr.Error("Failed to download .safetensors from Hugging Face - is there a working HTTP connection?")
-	gr.Info("Refiner models downloaded.")
-
-	# Download Stage C models:
-	print("Downloading Base/Stage C models.")
-	base_stage_c_path      = os.path.join(unet_folder_c, "stage_c_bf16.safetensors")
-	base_stage_c_lite_path = os.path.join(unet_folder_c, "stage_c_lite_bf16.safetensors")
-	reso_stage_c_path      = os.path.join(unet_folder_c, "resonance_r1_eX.safetensors")
-	reso_stage_c_lite_path = os.path.join(unet_folder_c, "resonance_r1_eX_lite.safetensors")
-
-	if not os.path.isfile(base_stage_c_path):
-		try:
-			download_single_model(base_stage_c_path, "https://huggingface.co/stabilityai/stable-cascade/resolve/main/stage_c_bf16.safetensors?download=true")
-		except:
-			raise gr.Error("Failed to download .safetensors from Hugging Face - is there a working HTTP connection?")
-	
-	if not os.path.isfile(base_stage_c_lite_path):
-		try:
-			download_single_model(base_stage_c_lite_path, "https://huggingface.co/stabilityai/stable-cascade/resolve/main/stage_c_lite_bf16.safetensors?download=true")
-		except:
-			raise gr.Error("Failed to download .safetensors from Hugging Face - is there a working HTTP connection?")
-	gr.Info("Base models downloaded.")
-
-	# Download Latent Encoder and Decoder models:
-	print("Downloading Latent models.")
-	base_effnet_enc_path = os.path.join(vae_folder, "effnet_encoder.safetensors")
-	base_stage_a_path    = os.path.join(vae_folder, "stage_a.safetensors")
-	if not os.path.isfile(base_effnet_enc_path):
-		try:
-			download_single_model(base_effnet_enc_path, "https://huggingface.co/stabilityai/stable-cascade/resolve/main/effnet_encoder.safetensors?download=true")
-		except:
-			raise gr.Error("Failed to download .safetensors from Hugging Face - is there a working HTTP connection?")
-	
-	if not os.path.isfile(base_stage_a_path):
-		try:
-			download_single_model(base_stage_a_path, "https://huggingface.co/stabilityai/stable-cascade/resolve/main/stage_a.safetensors?download=true")
-		except:
-			raise gr.Error("Failed to download .safetensors from Hugging Face - is there a working HTTP connection?")
-	
-	print("Finished downloading.")
-
 
 # Handle ComfyUI generation workflow specific actions:
 def queue_workflow_websocket(workflow):
@@ -314,29 +193,57 @@ def gen_images_websocket(ws, workflow):
 
 	return gallery_images
 
-def process_basic_txt2img(pos, neg, steps_c, seed_c, width, height, cfg_c, batch, compression, seed_b, cfg_b, steps_b, stage_b, stage_c, clip_model, backend):
+def process_basic_txt2img(pos, neg, steps_c, seed_c, width, height, cfg_c, batch, compression, shift, latent_id, seed_b, cfg_b, steps_b, stage_b, stage_c, clip_model, backend):
 	global gui_default_settings
 	global ws
 
 	# Modify template JSON to fit parameters.
 	workflow = json.loads(workflows.get_txt2img())
 	# Stage C settings:
-	workflow["70"]["inputs"]["text"]        = pos #pos.replace("\\", "\\\\")
-	workflow["7"]["inputs"]["text"]         = neg #neg.replace("\\", "\\\\")
-	workflow["3"]["inputs"]["steps"]        = steps_c
-	workflow["3"]["inputs"]["seed"]         = seed_c if seed_c > -1 else random.randint(0, 2147483647)
+
+	# Prompts
+	workflow["68"]["inputs"]["text"] = pos
+	workflow["7"]["inputs"]["text"]  = neg
+
+	# Stage C KSampler
+	workflow["3"]["inputs"]["steps"] = steps_c
+	workflow["3"]["inputs"]["seed"]  = seed_c if seed_c > -1 else random.randint(0, 2147483647)
+	workflow["3"]["inputs"]["cfg"]   = cfg_c
+
+	# EmptyLatentImage
 	workflow["34"]["inputs"]["width"]       = width
 	workflow["34"]["inputs"]["height"]      = height
 	workflow["34"]["inputs"]["compression"] = compression
-	workflow["3"]["inputs"]["cfg"]          = cfg_c
 	workflow["34"]["inputs"]["batch_size"]  = batch
-	workflow["48"]["inputs"]["clip_name"]   = clip_model
-	workflow["49"]["inputs"]["unet_name"]   = stage_c
+
+	# CLIP and Stage C UNET
+	workflow["74"]["inputs"]["unet_name"] = stage_c
+	workflow["75"]["inputs"]["clip_name"] = clip_model
+	workflow["73"]["inputs"]["shift"]     = shift
+	
 	# Stage B settings:
-	workflow["50"]["inputs"]["unet_name"]   = stage_b
+
+	# Stage B UNET
+	workflow["77"]["inputs"]["unet_name"] = stage_b
+
+	# Stage B KSampler
 	workflow["33"]["inputs"]["seed"]  = seed_b if seed_b > -1 else random.randint(0, 2147483647)
 	workflow["33"]["inputs"]["steps"] = steps_b
 	workflow["33"]["inputs"]["cfg"]   = cfg_b
+
+	# Handle getting images from a batch:
+	if batch > 1 and latent_id > 0:
+		# Ensure that the batch index is zero indexed
+		workflow["89"]["inputs"]["batch_index"] = latent_id - 1
+		workflow["89"]["inputs"]["length"] = 1
+		workflow["90"]["inputs"]["batch_index"] = latent_id - 1
+		workflow["90"]["inputs"]["length"] = 1
+	else:
+		workflow["89"]["inputs"]["batch_index"] = 0
+		workflow["89"]["inputs"]["length"]      = batch
+		workflow["90"]["inputs"]["batch_index"] = 0
+		workflow["90"]["inputs"]["length"]      = batch
+
 
 	# This is for saving images so they retain their metadata
 	json_workflow = json.dumps(workflow).encode('utf-8')
@@ -345,18 +252,21 @@ def process_basic_txt2img(pos, neg, steps_c, seed_c, width, height, cfg_c, batch
 		try:
 			ws.ping()
 		except:
-			raise gr.Error("Connection to ComfyUI's API websocket lost. Try restarting both this GUI and the ComfyUI websocket.")
+			raise gr.Error("Connection to ComfyUI's API websocket lost. Try restarting the ComfyUI websocket.")
+
 		timer_start = time.time()
 		gallery_images = gen_images_websocket(ws, workflow)
 		timer_finish = f"{time.time()-timer_start:.2f}"
 		gen_info  = f"Prompt: **{pos.strip()}**\n"
 		gen_info += f"\nNegative Prompt: **{neg.strip()}**\n"
 		gen_info += f"\nResolution: **{width}x{height}**\n"
+		gen_info += f"\nCompression: **{compression}**\n"
 		gen_info += f"\nBatch Size: **{batch}**\n"
 		
 		gen_info += f"\nBase Steps: **{steps_c}**\n"
 		gen_info += f"\nBase Seed: **{workflow['3']['inputs']['seed']}**\n"
 		gen_info += f"\nBase CFG: **{cfg_c}**\n"
+		gen_info += f"\nBase Shift: **{shift}**\n"
 		gen_info += f"\nBase Model: **{stage_c}**\n"
 		gen_info += f"\nCLIP Model: **{clip_model}**\n"
 
