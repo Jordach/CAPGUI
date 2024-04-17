@@ -1,0 +1,1 @@
+# This file returns settings tab related features

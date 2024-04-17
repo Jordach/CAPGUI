@@ -1,0 +1,1 @@
+# This file returns img2img specific features

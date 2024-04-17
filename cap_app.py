@@ -1,8 +1,11 @@
 import os
 import cap_util
+from cap_util import gui_generics
 import websocket
 import uuid
 import gradio as gr
+
+from cap_gui import topbar
 
 config_status = cap_util.load_config()
 
@@ -15,82 +18,31 @@ except Exception as e:
 # Memorise a list of checkpoints with their partial paths inside the comfy folders
 clip_models, stage_b_models, stage_c_models = cap_util.scan_for_comfy_models()
 
-with gr.Blocks(title="CAP App", analytics_enabled=False, css="custom_css.css") as app:
-	with gr.Row(elem_id="model_select"):
-		# Selecting defaults or falling back to the first model entry
-		# Fallback to RESCAN MODELS notice if no_path is seen
-		stage_c_default = cap_util.gui_default_settings["comfy_stage_c"] if cap_util.gui_default_settings["comfy_stage_c"] in stage_c_models else stage_c_models[0]
-		stage_c_default = "RESCAN MODELS" if cap_util.gui_default_settings["comfy_stage_c"] == "no_path" else stage_c_default
+# Selecting defaults or falling back to the first model entry
+# Fallback to RESCAN MODELS notice if no_path is seen
+stage_c_default = cap_util.gui_default_settings["comfy_stage_c"] if cap_util.gui_default_settings["comfy_stage_c"] in stage_c_models else stage_c_models[0]
+stage_c_default = "RESCAN MODELS" if cap_util.gui_default_settings["comfy_stage_c"] == "no_path" else stage_c_default
 
-		stage_b_default = cap_util.gui_default_settings["comfy_stage_b"] if cap_util.gui_default_settings["comfy_stage_b"] in stage_b_models else stage_b_models[0]
-		stage_b_default = "RESCAN MODELS" if cap_util.gui_default_settings["comfy_stage_b"] == "no_path" else stage_b_default
-		
-		clip_default = cap_util.gui_default_settings["comfy_clip"] if cap_util.gui_default_settings["comfy_clip"] in clip_models else clip_models[0]
-		clip_default = "RESCAN MODELS" if cap_util.gui_default_settings["comfy_clip"] == "no_path" else clip_default
-		
-		# Also handle saving for changes on a per dropdown basis
-		stage_c_ckpt = gr.Dropdown(
-			stage_c_models, filterable=False,
-			value=stage_c_default,
-			label="Cascade Base Model:", scale=1,
-		)
-		def save_sc_ckpt(entry):
-			cap_util.gui_default_settings["comfy_stage_c"] = entry
-			cap_util.save_config()
-		stage_c_ckpt.input(save_sc_ckpt, inputs=[stage_c_ckpt])
+stage_b_default = cap_util.gui_default_settings["comfy_stage_b"] if cap_util.gui_default_settings["comfy_stage_b"] in stage_b_models else stage_b_models[0]
+stage_b_default = "RESCAN MODELS" if cap_util.gui_default_settings["comfy_stage_b"] == "no_path" else stage_b_default
 
-		stage_b_ckpt = gr.Dropdown(
-			stage_b_models, filterable=False,
-			value=stage_b_default,
-			label="Cascade Refiner Model:", scale=1,
-		)
-		def save_sb_ckpt(entry):
-			cap_util.gui_default_settings["comfy_stage_b"] = entry
-			cap_util.save_config()
-		stage_b_ckpt.input(save_sb_ckpt, inputs=[stage_b_ckpt])
+clip_default = cap_util.gui_default_settings["comfy_clip"] if cap_util.gui_default_settings["comfy_clip"] in clip_models else clip_models[0]
+clip_default = "RESCAN MODELS" if cap_util.gui_default_settings["comfy_clip"] == "no_path" else clip_default
 
-		clip_ckpt = gr.Dropdown(
-			clip_models, filterable=False,
-			value=clip_default,
-			label="Cascade Text Model:", scale=1,
-		)
-		def save_clip_ckpt(entry):
-			cap_util.gui_default_settings["comfy_clip"] = entry
-			cap_util.save_config()
-		clip_ckpt.input(save_clip_ckpt, inputs=[clip_ckpt])
+global_tabs = {}
+def register_tab(tab_name, friendly_name, tab_code_function, send_to_state):
+	global global_tabs, tab_friendly_name
+	global_tabs[tab_name] = {}
+	global_tabs[tab_name]["__tab_name__"] = tab_name
+	global_tabs[tab_name]["__friendly_name__"] = friendly_name
+	global_tabs[tab_name]["__send_to__"] = send_to_state
+	tab_code_function(global_tabs, global_tabs[tab_name], tab_name)
 
-		with gr.Column(scale=0):
-			model_rescan_button = gr.Button("Rescan Comfy Models.", scale=1, size="sm")
-			restart_socket_button = gr.Button("Reconnect ComfyUI WebSocket", elem_id="backend_reconnect_comfy", scale=1, size="sm")
-		backend_dropdown = gr.Dropdown(["ComfyUI", "CAP"], label="Generation Backend:", value="ComfyUI", filterable=False, scale=1)
-
-		def model_rescan_hook(backend):
-			global clip_models
-			global stage_b_models
-			global stage_c_models
-			#if backend == "ComfyUI":
-			clip_models, stage_b_models, stage_c_models = cap_util.scan_for_comfy_models()
-			return gr.Dropdown(choices=stage_c_models), gr.Dropdown(choices=stage_b_models), gr.Dropdown(choices=clip_models)
-		model_rescan_button.click(model_rescan_hook, inputs=[backend_dropdown], outputs=[stage_c_ckpt, stage_b_ckpt, clip_ckpt])
-
-		def restart_websocket():
-			comfy_ws_addr = cap_util.get_websocket_address()
-			try:
-				cap_util.ws.ping()
-			except:
-				pass
-
-			cap_util.ws.close()
-			try:
-				cap_util.ws.connect(comfy_ws_addr)
-			except:
-				raise gr.Error("ComfyUI does not appear to be available at that address and port.\nTry checking settings or that ComfyUI is running.")
-			gr.Info("Successfully reconnected to ComfyUI!")
-
-		restart_socket_button.click(restart_websocket, inputs=None, outputs=None)
+with gr.Blocks(title=f"{'[ANON MODE] ' if cap_util.gui_default_settings['ui_anonymous_mode'] else ''}CAP App", analytics_enabled=False, css="custom_css.css") as app:
+	topbar.create_topbar(global_tabs, stage_c_models, stage_c_default, stage_b_models, stage_b_default, clip_models, clip_default)
 
 	with gr.Tab("Text to Image", elem_id="tab_txt2img"):
-		with gr.Row(elem_id="topbar"):
+		with gr.Row(elem_id="promptbar"):
 			with gr.Column(scale=6, elem_id="prompts"):
 				txt_pos_prompt = gr.Textbox(label=None, show_label=False, placeholder="Enter a prompt here.", lines=3)
 				txt_neg_prompt = gr.Textbox(label=None, show_label=False, placeholder="Enter a negative prompt here.", lines=3)
@@ -139,8 +91,14 @@ with gr.Blocks(title="CAP App", analytics_enabled=False, css="custom_css.css") a
 								info="When generating a batch, if this is set to 1, it will only generate the first image of that batch. Zero generates the whole batch.",
 								label="Select From Batch:"
 							)
+							
+							txt_save_images = gr.Checkbox(value=not cap_util.gui_default_settings["ui_anonymous_mode"], label="Save Generated Images", 
+								interactive=not cap_util.gui_default_settings["ui_anonymous_mode"]
+							)
 
 						with gr.Column(scale=4):
+							txt_aspect_info = gr.Textbox("1:1", label="Aspect Ratio:", lines=1, max_lines=1, interactive=False)
+							txt_aspect_info.change(cap_util.dummy_gradio_function, inputs=[], outputs=[], show_progress=False, queue=False)
 							txt_stage_c_width = gr.Slider(
 								minimum=cap_util.gui_default_settings["gen_size_min"],
 								maximum=cap_util.gui_default_settings["gen_size_max"],
@@ -148,24 +106,15 @@ with gr.Blocks(title="CAP App", analytics_enabled=False, css="custom_css.css") a
 								step=cap_util.gui_default_settings["gen_size_step"],
 								label="Width:", interactive=True,
 							)
+							txt_stage_c_width.change(cap_util.dummy_gradio_function, inputs=[], outputs=[], show_progress=False, queue=False)
 							txt_stage_c_height = gr.Slider(
 								minimum=cap_util.gui_default_settings["gen_size_min"],
 								maximum=cap_util.gui_default_settings["gen_size_max"],
 								value=cap_util.gui_default_settings["gen_size"],
 								step=cap_util.gui_default_settings["gen_size_step"],
 								label="Height:", interactive=True
-								)
-						
-						# with gr.Row():
-							txt_stage_c_compression = gr.Slider(
-									minimum=32,
-									maximum=72,
-									info="The recommended default compression factor is 42. While greater compression factors reduce time to generate an image at lower resolutios, this also ruins the image, but enables higher resolutions.",
-									value=cap_util.gui_default_settings["gen_compression"],
-									step=1,
-									label="Compression:", interactive=True
 							)
-
+							txt_stage_c_height.change(cap_util.dummy_gradio_function, inputs=[], outputs=[], show_progress=False, queue=False)
 							txt_stage_c_shift = gr.Slider(
 								minimum=cap_util.gui_default_settings["gen_c_shift_min"],
 								maximum=cap_util.gui_default_settings["gen_c_shift_max"],
@@ -173,6 +122,45 @@ with gr.Blocks(title="CAP App", analytics_enabled=False, css="custom_css.css") a
 								step=cap_util.gui_default_settings["gen_c_shift_step"],
 								label='"Shift"', interactive=True,
 								info='This value "shifts" the denoising process of Stage C, which can somewhat create seed variations.'
+							)
+
+							txt_stage_c_compression = gr.Slider(
+								minimum=32,
+								maximum=80,
+								info="The recommended default compression factor is 42. Automatic Compression Finder will find the compression factor that results in the best quality for your resolution. When compression reaches 80, higher resolutions can become unstable.",
+								value=cap_util.gui_default_settings["gen_compression"],
+								step=1, scale=3,
+								label="Compression:", interactive=True
+							)
+
+							txt_stage_c_compression.change(cap_util.dummy_gradio_function, inputs=[], outputs=[], show_progress=False, queue=False)
+							txt_stage_c_auto_compression = gr.Checkbox(value=True, label="Automatic Compression Finder", scale=1, interactive=True)
+							
+							def calc_compression_factor(width, height, apply_change):
+								aspect_text = cap_util.calc_aspect_string(width, height)
+								if apply_change:
+									return cap_util.calc_compression_factor(width, height), aspect_text
+								else:
+									return gr.Slider(), aspect_text
+							# txt_stage_c_width.release(
+							# 	calc_compression_factor, 
+							# 	inputs=[txt_stage_c_width, txt_stage_c_height, txt_stage_c_auto_compression], 
+							# 	outputs=[txt_stage_c_compression, txt_aspect_info], show_progress=False, queue=False
+							# )
+							txt_stage_c_width.input(
+								calc_compression_factor, 
+								inputs=[txt_stage_c_width, txt_stage_c_height, txt_stage_c_auto_compression], 
+								outputs=[txt_stage_c_compression, txt_aspect_info], show_progress=False, queue=False
+							)
+							# txt_stage_c_height.release(
+							# 	calc_compression_factor, 
+							# 	inputs=[txt_stage_c_width, txt_stage_c_height, txt_stage_c_auto_compression], 
+							# 	outputs=[txt_stage_c_compression, txt_aspect_info], show_progress=False, queue=False
+							# )
+							txt_stage_c_height.input(
+								calc_compression_factor, 
+								inputs=[txt_stage_c_width, txt_stage_c_height, txt_stage_c_auto_compression], 
+								outputs=[txt_stage_c_compression, txt_aspect_info], show_progress=False, queue=False
 							)
 
 				with gr.Accordion(label="Refiner Settings:", open=False, elem_id="accordion_refiner_settings"):
@@ -193,31 +181,73 @@ with gr.Blocks(title="CAP App", analytics_enabled=False, css="custom_css.css") a
 						label="Refiner CFG:", interactive=True
 					)
 
-				with gr.Accordion(label="Extras:", open=False):
+				with gr.Accordion(label="Extras:", open=False, elem_id="accordion_extras"):
 					gr.Markdown("Soon")
 
 			with gr.Column():
 				txt_gallery = gr.Gallery(allow_preview=True, preview=True, show_download_button=True, object_fit="contain", show_label=False, label=None, elem_id="txt2img_gallery", height="70vh")
+				#txt_gallery.change(cap_util.dummy_gradio_function, inputs=[], outputs=[], show_progress=False)
 				with gr.Accordion("Generation Info:", open=True):
 					txt_gen_info_box = gr.Markdown("")
 
 		# Internal self contained tab functions go here:
-		txt_stage_c_swap_aspects.click(cap_util.swap_width_height, inputs=[txt_stage_c_height, txt_stage_c_width], outputs=[txt_stage_c_height, txt_stage_c_width])
+		txt_stage_c_swap_aspects.click(cap_util.swap_width_height, inputs=[txt_stage_c_height, txt_stage_c_width], outputs=[txt_stage_c_height, txt_stage_c_width, txt_aspect_info])
 		txt_generate.click(cap_util.process_basic_txt2img, inputs=[
-			txt_pos_prompt,          txt_neg_prompt,     txt_stage_c_steps,         txt_stage_c_seed,
-			txt_stage_c_width,       txt_stage_c_height, txt_stage_c_cfg,           txt_stage_c_batch,
+			txt_pos_prompt,          txt_neg_prompt,     txt_stage_c_steps,             txt_stage_c_seed,
+			txt_stage_c_width,       txt_stage_c_height, txt_stage_c_cfg,               txt_stage_c_batch,
 			txt_stage_c_compression, txt_stage_c_shift,  txt_stage_c_single_latent,
-			txt_stage_b_seed,        txt_stage_b_cfg,    txt_stage_b_steps,         stage_b_ckpt, 
-			stage_c_ckpt,            clip_ckpt,          backend_dropdown
+			txt_stage_b_seed,        txt_stage_b_cfg,    txt_stage_b_steps,             global_tabs["topbar"]["stage_b"], 
+			global_tabs["topbar"]["stage_c"],            global_tabs["topbar"]["clip"], global_tabs["topbar"]["backend"]
 		], outputs=[txt_gallery, txt_gen_info_box])
 
 	with gr.Tab("Image to Image", elem_id="tab_img2img"):
-		gr.Markdown("Soon")
+		with gr.Row(elem_id="topbar"):
+			with gr.Column(scale=6, elem_id="prompts"):
+				img_pos_prompt = gr.Textbox(label=None, show_label=False, placeholder="Enter a prompt here.", lines=3)
+				img_neg_prompt = gr.Textbox(label=None, show_label=False, placeholder="Enter a negative prompt here.", lines=3)
+			with gr.Column(elem_id="buttons"):
+				img_generate = gr.Button("Generate!", variant="primary", elem_id="generate_img2img")
+				img_rec_last_prompt = gr.Button("Load Last Generation", elem_id="reload_img2img")
+				img_send_to_txt2img = gr.Button("Send to Text to Image", elem_id="s2txt_img2img")
+				img_send_to_inpaint = gr.Button("Send to Inpainting", elem_id="s2inp_img2img")
+		with gr.Row(elem_id="tabcontent"):
+			with gr.Column(scale=1, elem_id="settings"):
+				with gr.Accordion(label="Base Settings:", open=False, elem_id="accordion_base_settings"):
+					with gr.Column():
+						with gr.Row():
+							img_stage_c_steps = gr.Slider(
+								minimum=cap_util.gui_default_settings["gen_c_steps_min"],
+								maximum=cap_util.gui_default_settings["gen_c_steps_max"],
+								value=cap_util.gui_default_settings["gen_c_steps"],
+								step=cap_util.gui_default_settings["gen_c_steps_step"],
+								scale=10, label="Base Steps:", interactive=True,
+							)
+							img_stage_c_seed = gr.Number(value=-1, minimum=-1, maximum=2147483647, precision=0, label="Base Seed:", scale=2, interactive=True)
+							with gr.Row():
+								img_stage_c_set_seed_rand = gr.Button("🎲", size="sm", scale=1, variant="secondary")
+								img_stage_c_swap_aspects = gr.Button("🔀", size="sm", scale=1, variant="secondary")
+					with gr.Row():
+						with gr.Column(scale=2):
+							pass
+
+						with gr.Column(scale=4):
+							pass
+				pass
+
+			with gr.Column(elem_id="output"):
+				img_gallery = gr.Gallery(allow_preview=True, preview=True, show_download_button=True, object_fit="contain", show_label=False, label=None, elem_id="img2img_gallery", height="70vh")
+				with gr.Accordion("Generation Info:", open=True):
+					img_gen_info_box = gr.Markdown("")
+			gr.Markdown("Soon")
 		# Internal self contained tab functions go here:
 	
 	with gr.Tab("Inpainting", elem_id="tab_inpainting"):
 		gr.Markdown("Soon")
 		# Internal self contained tab functions go here:
+
+	if not cap_util.gui_default_settings["ui_anonymous_mode"]:
+		with gr.Tab("Gallery", elem_id="tab_gallery"):
+			gr.Markdown("Soon")
 
 	with gr.Tab("Settings", elem_id="tab_settings"):
 		with gr.Accordion(label="Community AI Platform Settings:", open=False):
@@ -241,7 +271,7 @@ with gr.Blocks(title="CAP App", analytics_enabled=False, css="custom_css.css") a
 		gr.Markdown("Soon")
 		# Internal self contained tab functions go here:
 
-	gr.Markdown(f"CAP App Prototype")
+	gr.Markdown(f"CAP App Prototype{', **GENERATIONS WILL NOT BE SAVED IN ANONYMOUS MODE!**' if cap_util.gui_default_settings['ui_anonymous_mode'] else ''}")
 	# Element functions that work on the current and or other tabs go here:
 	# pass
 

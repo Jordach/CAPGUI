@@ -1,0 +1,1 @@
+# This file returns inpainting specific features

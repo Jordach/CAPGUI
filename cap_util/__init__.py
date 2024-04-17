@@ -26,7 +26,7 @@ gui_default_settings = {
 
 	"gen_size": 1024,
 	"gen_size_min": 256,
-	"gen_size_max": 4096,
+	"gen_size_max": 8192,
 	"gen_size_step": 32,
 
 	"gen_c_steps": 20,
@@ -54,7 +54,7 @@ gui_default_settings = {
 	"gen_c_cnet_strength_max": 1.0,
 	"gen_c_cnet_strength_step": 0.01,
 
-	"gen_b_steps": 10,
+	"gen_b_steps": 12,
 	"gen_b_steps_min": 1,
 	"gen_b_steps_max": 50,
 	"gen_b_steps_step": 1,
@@ -70,6 +70,7 @@ gui_default_settings = {
 	"gen_b_denoise_step": 0.05,
 
 	# UI and functionality:
+	"ui_anonymous_mode": False,
 	"ui_img2img_include_original": True,
 }
 
@@ -91,6 +92,8 @@ import os
 import requests
 import gradio as gr
 import shutil
+import base64
+import math
 
 def load_config():
 	global gui_default_settings
@@ -123,13 +126,81 @@ def save_config(backup=False):
 	with open("config.yaml", "w", encoding="utf-8") as config:
 		yaml.dump(gui_default_settings, config)
 
+# Generic Math Functions:
+def remap(val, min_val, max_val, min_map, max_map):
+	return (val-min_val)/(max_val-min_val) * (max_map-min_map) + min_map
+
+def clamp(val, min, max):
+	if val < min:
+		return min
+	elif val > max:
+		return max
+	else:
+		return val
+
+def compression_curve(x):
+	return math.pow(x, 0.9)
+
 # Handle Gradio based GUI interactions:
+def dummy_gradio_function():
+	pass
+
+def set_random_seed():
+	return -1
+
 def get_websocket_address():
 	global gui_default_settings
 	return f"ws://{gui_default_settings['comfy_address']}:{gui_default_settings['comfy_port']}/ws?clientId={gui_default_settings['comfy_uuid']}"
 
+def calc_compression_factor(width, height):
+	min_len = min(width, height)
+	max_len = max(width, height)
+	# Clamp ratio to a specific length
+	ratio = max_len/min_len
+	ratio = clamp(ratio, 1, 2.25)
+	# Remap the aspect ratio from linear to an eased curve
+	r_factor = compression_curve(
+		remap(ratio, 1, 2.25, 0, 1)
+	)
+	# Figure out if the max latent length is clamped at 32 to 60
+	max_fac_len = int(clamp(
+		remap(r_factor, 0, 1, 48, 60),
+		32, 60
+	))
+
+	final_compression_factor = 0
+	found_factor = False
+	# Start from the highest compression factor as lower factors have better quality
+	for compression in range(80, 31, -1):
+		# Find our current latent edge
+		latent_size = (max_len) // compression
+		if latent_size <= max_fac_len:
+			final_compression_factor = compression
+			found_factor = True
+		
+		# Fixes extreme aspect ratios snapping to 32
+		if not found_factor:
+			final_compression_factor = 80
+	return clamp(final_compression_factor, 32, 80)
+
+def calc_aspect_string(x, y):
+	x1 = int(x)
+	y1 = int(y)
+	if x1 < y1:
+		lval = y1/x1
+		if lval.is_integer():
+			return f"1:{int(lval)}"
+		else:
+			return f"1:{lval:.2f}"
+	else:
+		lval = x1/y1
+		if lval.is_integer():
+			return f"{int(lval)}:1"
+		else:
+			return f"{lval:.2f}:1"
+
 def swap_width_height(a, b):
-	return copy.deepcopy(b), copy.deepcopy(a)
+	return copy.deepcopy(b), copy.deepcopy(a), calc_aspect_string(b, a)
 
 def scan_for_comfy_models():
 	global gui_default_settings
@@ -158,6 +229,11 @@ def scan_for_comfy_models():
 			if os.path.splitext(model)[1].lower() == ".safetensors":
 				stage_c_models.append(f"cascade/stage_c/{model}")
 	return clip_models, stage_b_models, stage_c_models
+
+def image_to_b64(image):
+	bytes_buffer = io.BytesIO()
+	image.save(bytes_buffer, format="png")
+	return base64.b64encode(bytes_buffer.getvalue())
 
 # Handle ComfyUI generation workflow specific actions:
 def queue_workflow_websocket(workflow):

@@ -24,7 +24,7 @@ document.addEventListener('keydown', function(e) {
 	const isAltKey = e.altKey;
 	const isEsc = e.key === 'Escape';
 	
-	const generateButton = get_tab_window().querySelector('#topbar > #buttons > button[id^=generate_]');
+	const generateButton = get_tab_window().querySelector('#promptbar > #buttons > button[id^=generate_]');
 	if (isCtrlKey && isEnter) {
 		e.preventDefault();
 		generateButton.click();

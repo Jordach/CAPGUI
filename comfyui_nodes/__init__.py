@@ -1,6 +1,11 @@
 import comfy
 import folder_paths
 import math
+import torch
+from PIL import Image
+import numpy as np
+from io import BytesIO
+import base64
 
 class UNETLoaderCAP:
 	@classmethod
@@ -37,12 +42,36 @@ class CLIPLoaderCAP:
 		clip = comfy.sd.load_clip(ckpt_paths=[clip_path], embedding_directory=folder_paths.get_folder_paths("embeddings"), clip_type=clip_type)
 		return (clip,)
 
+def conv_pil_tensor(img):
+	return (torch.from_numpy(np.array(img).astype(np.float32) / 255.0).unsqueeze(0),)
+
+def conv_tensor_pil(tsr):
+	return Image.fromarray(np.clip(255. * tsr.cpu().numpy().squeeze(), 0, 255).astype(np.uint8))
+
+class B64Decoder:
+	@classmethod
+	def INPUT_TYPES(s):
+		return {
+			"required": {"base64_image": ("STRING", {"multiline": False})}
+		}
+	RETURN_TYPES = ("IMAGE",)
+	FUNCTION = "load_image"
+
+	CATEGORY = "api/image"
+
+	def load_image(self, base64_image):
+		img_data = base64.b64decode(base64_image)
+		pil_img = Image.open(BytesIO(img_data))
+		return conv_pil_tensor(pil_img)
+
 NODE_CLASS_MAPPINGS = {
 	"UNETLoaderCAPGUI": UNETLoaderCAP,
 	"CLIPLoaderCAPGUI": CLIPLoaderCAP,
+	"Base64ToImageCAPGUI": B64Decoder,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
 	"UNETLoaderCAPGUI": "CAPGUI API UNETLoader",
 	"CLIPLoaderCAPGUI": "CAPGUI API CLIPLoader",
+	"Base64ToImageCAPGUI": "CAPGUI API Base64 Image Decoder",
 }
