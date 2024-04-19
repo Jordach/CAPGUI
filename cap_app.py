@@ -1,7 +1,7 @@
 import os
 import cap_util
 from cap_util import gui_generics
-from cap_gui import txt
+from cap_gui import txt, img
 import websocket
 import uuid
 import gradio as gr
@@ -30,21 +30,21 @@ stage_b_default = "RESCAN MODELS" if cap_util.gui_default_settings["comfy_stage_
 clip_default = cap_util.gui_default_settings["comfy_clip"] if cap_util.gui_default_settings["comfy_clip"] in clip_models else clip_models[0]
 clip_default = "RESCAN MODELS" if cap_util.gui_default_settings["comfy_clip"] == "no_path" else clip_default
 
-def register_tab(global_tabs, post_hooks, tab_name, friendly_name, tab_code_function, post_tab_code_function, send_to_state, available):
+def register_tab(g_tabs, p_hooks, tab_name, friendly_name, tab_code_function, post_tab_code_function, send_to_state, available):
 	# Do not create tabs where they may not be availble, such as Anonymous Mode.
 	if not available:
 		return
 
-	global_tabs[tab_name] = {}
-	global_tabs[tab_name]["__send_to__"] = send_to_state
-	global_tabs[tab_name]["__tab_name__"] = tab_name
-	global_tabs[tab_name]["__name_pair__"] = (tab_name, friendly_name)
-	global_tabs[tab_name]["__friendly_name__"] = friendly_name
-	global_tabs[tab_name]["tab_ref"] = gr.Tab(label=friendly_name, elem_id=f"tab_{tab_name}")
-	with global_tabs[tab_name]["tab_ref"]:
+	g_tabs[tab_name] = {}
+	g_tabs[tab_name]["__send_to__"] = send_to_state
+	g_tabs[tab_name]["__tab_name__"] = tab_name
+	g_tabs[tab_name]["__name_pair__"] = (tab_name, friendly_name)
+	g_tabs[tab_name]["__friendly_name__"] = friendly_name
+	g_tabs[tab_name]["tab_ref"] = gr.Tab(label=friendly_name, elem_id=f"tab_{tab_name}")
+	with g_tabs[tab_name]["tab_ref"]:
 		tab_code_function(global_tabs, global_tabs[tab_name])
 	# Run this code later at the end of tab registering
-	post_hooks.append((post_tab_code_function, global_tabs, global_tabs[tab_name]))
+	p_hooks.append((post_tab_code_function, g_tabs, g_tabs[tab_name]))
 
 with gr.Blocks(title=f"{'[ANON MODE] ' if cap_util.gui_default_settings['ui_anonymous_mode'] else ''}CAP App", analytics_enabled=False, css="custom_css.css") as app:
 	post_hooks = []
@@ -87,6 +87,7 @@ with gr.Blocks(title=f"{'[ANON MODE] ' if cap_util.gui_default_settings['ui_anon
 
 	# Register tabs here
 	register_tab(global_tabs, post_hooks, "txt2img", "Text to Image", txt.txt2img_tab, txt.txt2img_tab_post_hook, True, True)
+	register_tab(global_tabs, post_hooks, "img2img", "Image to Image", img.img2img_tab, gui_generics.dummy_post_hook, True, True)
 
 	# Gradio element Functions that work on the current and or other tabs go here:
 	for func in post_hooks:

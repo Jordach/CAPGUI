@@ -3,6 +3,14 @@ div.gradio-container {
     padding: var(--size-2) var(--size-2) !important;
 }
 
+.block.gradio-gallery{
+	background: var(--input-background-fill);
+}
+
+.gradio-gallery .thumbnails img {
+    object-fit: scale-down !important;
+}
+
 @media screen and (min-width: 2500px) {
     #txt2img_gallery, #img2img_gallery {
         min-height: 70vh !important;

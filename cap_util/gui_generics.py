@@ -178,14 +178,22 @@ def get_generation_settings_column(global_ctx, local_ctx):
 	
 	with gr.Accordion("Extras:", open=False, elem_id="extra_settings"):
 		gr.Markdown("To be continued")
+	
+	# Make the swapping of aspect ratios universal across tabs
+	local_ctx["stage_c_swap_ratio"].click(
+		cap_util.swap_width_height, 
+		inputs=[local_ctx["stage_c_height"], local_ctx["stage_c_width"]],
+		outputs=[local_ctx["stage_c_height"], local_ctx["stage_c_width"], local_ctx["aspect_info"]],
+		show_progress=False, queue=False
+	)
 
 def get_gallery_column(global_ctx, local_ctx, gallery_height="70vh"):
 	local_ctx["gallery"] = gr.Gallery(
-		allow_preview=True, preview=True, show_download_button=True, object_fit="contain",
-		show_label=False, label=None, elem_id=f"{local_ctx['__tab_name__']}_gallery", height=gallery_height
+		allow_preview=True, preview=True, show_download_button=True, object_fit="contain", 
+		show_label=False, label=None, elem_id=f"{local_ctx['__tab_name__']}_gallery", height=gallery_height,
 	)
 	with gr.Accordion(label="Generation Info:", open=True):
-		local_ctx["gen_info_box"] = gr.Markdown("")
+		local_ctx["gen_info_box"] = gr.Markdown("", line_breaks=True)
 		with gr.Column():
 			local_ctx["send_to_dropdown"] = get_send_to_dropdown(global_ctx)
 			local_ctx["send_to_button"] = get_send_to_button()
