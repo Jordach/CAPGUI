@@ -320,6 +320,8 @@ def process_basic_txt2img(pos, neg, steps_c, seed_c, width, height, cfg_c, batch
 		workflow["90"]["inputs"]["batch_index"] = 0
 		workflow["90"]["inputs"]["length"]      = batch
 
+	# Bugfix for the Stage A model being missing depending on platform with a different separator:
+	workflow["47"]["inputs"]["vae_name"] = os.path.join("cascade", "stage_a.safetensors")
 
 	# This is for saving images so they retain their metadata
 	json_workflow = json.dumps(workflow).encode('utf-8')
