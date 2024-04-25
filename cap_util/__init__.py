@@ -12,7 +12,7 @@ gui_default_settings = {
 
 	# CAP settings
 	"cap_use_cap_workers": False,
-	# This is never shown to the user - but saved in config.yaml
+	# This is never shown to the user - but it's saved in config.yaml for fast retrieval
 	"cap_login_token": "unauthenticated",
 	"cap_login_expiry": "unauthenticated",
 
@@ -74,6 +74,11 @@ gui_default_settings = {
 	"ui_img2img_include_original": True,
 }
 
+img2img_crop_types = [
+	"Resize Only",
+	"Crop to Latent Size",
+]
+
 # Imports for functions and actions
 import json
 import urllib
@@ -94,6 +99,7 @@ import gradio as gr
 import shutil
 import base64
 import math
+import hashlib
 
 def load_config():
 	global gui_default_settings
@@ -233,7 +239,7 @@ def scan_for_comfy_models():
 def image_to_b64(image):
 	bytes_buffer = io.BytesIO()
 	image.save(bytes_buffer, format="png")
-	return base64.b64encode(bytes_buffer.getvalue())
+	return base64.b64encode(bytes_buffer.getvalue()).decode()
 
 # Handle ComfyUI generation workflow specific actions:
 def queue_workflow_websocket(workflow):
@@ -269,7 +275,12 @@ def gen_images_websocket(ws, workflow):
 
 	return gallery_images
 
-def process_basic_txt2img(pos, neg, steps_c, seed_c, width, height, cfg_c, batch, compression, shift, latent_id, seed_b, cfg_b, steps_b, stage_b, stage_c, clip_model, backend):
+def process_basic_txt2img(
+		pos, neg, steps_c, seed_c, width, height, 
+		cfg_c, batch, compression, shift, latent_id, 
+		seed_b, cfg_b, steps_b, stage_b, 
+		stage_c, clip_model, backend
+):
 	global gui_default_settings
 	global ws
 
@@ -298,7 +309,6 @@ def process_basic_txt2img(pos, neg, steps_c, seed_c, width, height, cfg_c, batch
 	workflow["73"]["inputs"]["shift"]     = shift
 	
 	# Stage B settings:
-
 	# Stage B UNET
 	workflow["77"]["inputs"]["unet_name"] = stage_b
 
@@ -335,8 +345,10 @@ def process_basic_txt2img(pos, neg, steps_c, seed_c, width, height, cfg_c, batch
 		timer_start = time.time()
 		gallery_images = gen_images_websocket(ws, workflow)
 		timer_finish = f"{time.time()-timer_start:.2f}"
-		gen_info  = f"Prompt: **{pos.strip()}**\n"
-		gen_info += f"Negative Prompt: **{neg.strip()}**\n"
+		gi_pos = pos.strip().replace('\\', '\\\\')
+		gi_neg = neg.strip().replace('\\', '\\\\')
+		gen_info  = f"Prompt: **{gi_pos}**\n"
+		gen_info += f"Negative Prompt: **{gi_neg}**\n"
 		gen_info += f"Resolution: **{width}x{height}**\n"
 		gen_info += f"Compression: **{compression}**\n"
 		gen_info += f"Batch Size: **{batch}**\n"
@@ -353,8 +365,106 @@ def process_basic_txt2img(pos, neg, steps_c, seed_c, width, height, cfg_c, batch
 		gen_info += f"Refiner CFG: **{cfg_b}**\n"
 		gen_info += f"Refiner Model: **{stage_b}**\n\n"
 		# gen_info += f""
-		gen_info += f"Total Time: **{timer_finish}s\n**"
+		gen_info += f"Total Time: **{timer_finish}s**\n"
 		gen_info += f"Note: Gradio's image load and display routine is slow and can introduce it's own delay with regards to generated images."
 		return gallery_images, gen_info
 	else:
 		raise gr.Error("CAP Feature Unavailable.")
+
+def process_basic_img2img(
+		input_image, copy_orig, crop_type, pos, neg, 
+		steps_c, seed_c, width, height, cfg_c, 
+		batch, compression, shift, latent_id, 
+		seed_b, cfg_b, steps_b, 
+		stage_b, stage_c, clip_model, backend,
+		denoise
+):
+	workflow = json.loads(workflows.get_basic_img2img())
+
+	# Stage C settings:
+	# Prompts:
+	workflow["68"]["inputs"]["text"] = pos
+	workflow["7"]["inputs"]["text"] = neg
+
+	# KSampler:
+	workflow["3"]["inputs"]["steps"] = steps_c
+	workflow["3"]["inputs"]["seed"]  = seed_c if seed_c > -1 else random.randint(0, 2147483647)
+	workflow["3"]["inputs"]["cfg"]   = cfg_c
+	workflow["3"]["inputs"]["denoise"] = denoise
+
+	# Handle Image Processing chain:
+	output_width = 0
+	output_height = 0
+	# Handle resize only:
+	if crop_type == img2img_crop_types[0]:
+		output_width = (width // compression) * compression
+		output_height = (height // compression) * compression
+		resized_image = input_image.resize((output_width, output_height), Image.Resampling.LANCZOS)
+		workflow["100"]["inputs"]["base64_image"] = image_to_b64(resized_image)
+	# Resize and Crop to latent pixels:
+	elif crop_type == img2img_crop_types[1]:
+		output_width = (width // compression) * compression
+		output_height = (height // compression) * compression
+
+		resized_image = input_image.resize((output_width, output_height), Image.Resampling.LANCZOS)
+		workflow["100"]["inputs"]["base64_image"] = image_to_b64(resized_image).encode()
+
+	# CLIP and Stage C UNET:
+	workflow["74"]["inputs"]["unet_name"] = stage_c
+	workflow["75"]["inputs"]["clip_name"] = clip_model
+	workflow["73"]["inputs"]["shift"]     = shift
+
+	# Stage B settings:
+	# Stage B UNET
+	workflow["77"]["inputs"]["unet_name"] = stage_b
+
+	# KSampler:
+	workflow["33"]["inputs"]["seed"]    = seed_b if seed_b > -1 else random.randint(0, 2147483647)
+	workflow["33"]["inputs"]["steps"]   = steps_b
+	workflow["33"]["inputs"]["cfg"]     = cfg_b
+
+	# Handle Encoder/Decoder models
+	workflow["94"]["inputs"]["vae_name"] = os.path.join("cascade", "effnet_encoder.safetensors")
+	workflow["47"]["inputs"]["vae_name"] = os.path.join("cascade", "stage_a.safetensors")
+
+	# This is for saving images so they retain their metadata
+	json_workflow = json.dumps(workflow).encode('utf-8')
+
+	if backend == "ComfyUI":
+		try:
+			ws.ping()
+		except:
+			raise gr.Error("Connection to ComfyUI's API websocket lost. Try restarting the ComfyUI websocket.")
+		
+		timer_start = time.time()
+		gallery_images = gen_images_websocket(ws, workflow)
+		timer_finish = f"{time.time()-timer_start:.2f}"
+
+		if copy_orig:
+			gallery_images.append(input_image)
+
+		gi_pos = pos.strip().replace('\\', '\\\\')
+		gi_neg = neg.strip().replace('\\', '\\\\')
+		gen_info = f'''
+Prompt: **{gi_pos}**
+Negative Prompt: **{gi_neg}**
+Resolution: **{width}x{height}**
+Denoise: **{denoise}**
+Resize Mode: **{crop_type}**
+Compression: **{compression}**
+Batch Size: **{batch}**
+Base Steps: **{steps_c}**
+Base Seed: **{workflow["3"]["inputs"]["seed"]}**
+Base CFG: **{cfg_c}**
+Base Shift: **{shift}**
+Base Model: **{stage_c}**
+CLIP Model: **{clip_model}**
+Refiner Steps: **{steps_b}**
+Refiner Seed: **{workflow["33"]["inputs"]["seed"]}**
+Refiner CFG: **{cfg_b}**
+Refiner Model: **{stage_b}**
+
+Total Time: **{timer_finish}s**
+Note: Gradio's image load and display routine is slow and can introduce it's own delay with regards to generated images.
+'''
+		return gallery_images, gen_info

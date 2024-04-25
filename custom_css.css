@@ -16,3 +16,8 @@ div.gradio-container {
         min-height: 70vh !important;
     }
 }
+
+#prose {
+	width: 100vw !important;
+	height: 100vh !important;
+}

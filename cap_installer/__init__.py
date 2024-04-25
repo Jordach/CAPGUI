@@ -21,6 +21,9 @@ status_messages = {
 	
 	"dl_start_misc": "Downloading required encoders/decoders.",
 	"dl_done_misc": "Finished downloading required encoders/decoders.",
+
+	"dl_start_proto": "Downloading Resonance Prototypes Delta and Epsilon.",
+	"dl_done_proto": "Finished downloading Resonance Prototypes Delta and Epsilon.",
 }
 
 def print_or_Info(use_gr, msg):
@@ -84,6 +87,23 @@ def download_reso_models(models_dict, use_gradio):
 	if not os.path.exists(unet_folder_c):
 		os.makedirs(unet_folder_c)
 
+	# TODO: Move Reso Proto Delta + Epsilon to CDN
+	print_or_Info(use_gradio, status_messages["dl_start_proto"])
+	if models_dict["reso_c_proto"]:
+		proto_delta_te      = os.path.join(clip_folder,   "reso_proto_delta_e5_te.safetensors")
+		proto_delta_stage_c = os.path.join(unet_folder_c, "reso_proto_delta_e5_lite.safetensors")
+		proto_epsil_stage_c = os.path.join(unet_folder_c, "reso_proto_epsilon_e5.safetensors")
+		if not os.path.isfile(proto_delta_te):
+			# download_single_model(proto_delta_te, "https://path.to/reso_proto_model")
+			pass
+		if not os.path.isfile(proto_delta_stage_c):
+			# download_single_model(proto_delta_stage_c, "https://path.to/reso_proto_model")
+			pass
+		if not os.path.isfile(proto_epsil_stage_c):
+			# download_single_model(proto_epsil_stage_c, "https://path.to/reso_proto_model")
+			pass
+
+	print_or_Info(use_gradio, status_messages["dl_done_proto"])
 	# TODO: Complete Reso R1 model training
 
 def download_refiner_models(models_dict, use_gradio):

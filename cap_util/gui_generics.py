@@ -64,7 +64,6 @@ def get_generation_settings_column(global_ctx, local_ctx):
 				)
 
 				local_ctx["stage_c_seed"] = gr.Number(value=-1, minimum=-1, maximum=2147483647, precision=0, label="Base Seed:", scale=2, interactive=True,)
-				local_ctx["stage_c_seed"].change(cap_util.dummy_gradio_function, inputs=[], outputs=[], show_progress=False, queue=False)
 				with gr.Row():
 					local_ctx["stage_c_seed_rand"] = gr.Button("🎲", size="sm", scale=1, variant="secondary")
 					local_ctx["stage_c_swap_ratio"] = gr.Button("🔀", size="sm", scale=1, variant="secondary")
@@ -99,7 +98,6 @@ def get_generation_settings_column(global_ctx, local_ctx):
 
 			with gr.Column(scale=4):
 				local_ctx["aspect_info"] = gr.Textbox("1:1", label="Aspect Ratio:", lines=1, max_lines=1, interactive=False)
-				local_ctx["aspect_info"].change(cap_util.dummy_gradio_function, inputs=[], outputs=[], show_progress=False, queue=False)
 
 				local_ctx["stage_c_width"] = gr.Slider(
 					minimum=cap_util.gui_default_settings["gen_size_min"],
@@ -108,7 +106,6 @@ def get_generation_settings_column(global_ctx, local_ctx):
 					step=cap_util.gui_default_settings["gen_size_step"],
 					label="Width:", interactive=True,
 				)
-				local_ctx["stage_c_width"].change(cap_util.dummy_gradio_function, inputs=[], outputs=[], show_progress=False, queue=False)
 				
 				local_ctx["stage_c_height"] = gr.Slider(
 					minimum=cap_util.gui_default_settings["gen_size_min"],
@@ -117,7 +114,6 @@ def get_generation_settings_column(global_ctx, local_ctx):
 					step=cap_util.gui_default_settings["gen_size_step"],
 					label="Height:", interactive=True
 				)
-				local_ctx["stage_c_height"].change(cap_util.dummy_gradio_function, inputs=[], outputs=[], show_progress=False, queue=False)
 				
 				local_ctx["stage_c_shift"] = gr.Slider(
 					minimum=cap_util.gui_default_settings["gen_c_shift_min"],
@@ -136,7 +132,6 @@ def get_generation_settings_column(global_ctx, local_ctx):
 					step=1, scale=3,
 					label="Compression:", interactive=True
 				)
-				local_ctx["stage_c_compression"].change(cap_util.dummy_gradio_function, inputs=[], outputs=[], show_progress=False, queue=False)
 				local_ctx["stage_c_auto_compressor"] = gr.Checkbox(value=True, label="Automatic Compression Finder", scale=1, interactive=True)
 						
 				def calc_compression_factor(width, height, apply_change):
@@ -146,13 +141,13 @@ def get_generation_settings_column(global_ctx, local_ctx):
 					else:
 						return gr.Slider(), aspect_text
 				
-				local_ctx["stage_c_width"].input(
+				local_ctx["stage_c_width"].change(
 					calc_compression_factor,
 					inputs=[local_ctx["stage_c_width"], local_ctx["stage_c_height"], local_ctx["stage_c_auto_compressor"]],
 					outputs = [local_ctx["stage_c_compression"], local_ctx["aspect_info"]], show_progress=False, queue=False
 				)
 
-				local_ctx["stage_c_height"].input(
+				local_ctx["stage_c_height"].change(
 					calc_compression_factor,
 					inputs=[local_ctx["stage_c_width"], local_ctx["stage_c_height"], local_ctx["stage_c_auto_compressor"]],
 					outputs = [local_ctx["stage_c_compression"], local_ctx["aspect_info"]], show_progress=False, queue=False

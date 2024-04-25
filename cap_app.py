@@ -1,7 +1,7 @@
 import os
 import cap_util
 from cap_util import gui_generics
-from cap_gui import txt, img
+from cap_gui import txt, img, donate
 import websocket
 import uuid
 import gradio as gr
@@ -87,7 +87,8 @@ with gr.Blocks(title=f"{'[ANON MODE] ' if cap_util.gui_default_settings['ui_anon
 
 	# Register tabs here
 	register_tab(global_tabs, post_hooks, "txt2img", "Text to Image", txt.txt2img_tab, txt.txt2img_tab_post_hook, True, True)
-	register_tab(global_tabs, post_hooks, "img2img", "Image to Image", img.img2img_tab, gui_generics.dummy_post_hook, True, True)
+	register_tab(global_tabs, post_hooks, "img2img", "Image to Image", img.img2img_tab, img.img2img_tab_post_hook, True, True)
+	register_tab(global_tabs, post_hooks, "donate", "Donate", donate.donate_tab, gui_generics.dummy_post_hook, False, True)
 
 	# Gradio element Functions that work on the current and or other tabs go here:
 	for func in post_hooks:
