@@ -381,6 +381,9 @@ def process_basic_img2img(
 ):
 	workflow = json.loads(workflows.get_basic_img2img())
 
+	# Temporary override until a 64x compression switch is implemented:
+	compression = 32
+
 	# Stage C settings:
 	# Prompts:
 	workflow["68"]["inputs"]["text"] = pos
