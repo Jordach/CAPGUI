@@ -94,13 +94,13 @@ def download_reso_models(models_dict, use_gradio):
 		proto_delta_stage_c = os.path.join(unet_folder_c, "reso_proto_delta-e5_lite.safetensors")
 		proto_epsil_stage_c = os.path.join(unet_folder_c, "reso_proto_epsilon-e5.safetensors")
 		if not os.path.isfile(proto_delta_te):
-			download_single_model(proto_delta_te, "https://static.spectrometer.art/resonance/models/reso_proto_delta_e5_te.safetensors")
+			download_single_model(proto_delta_te, "https://static.spectrometer.art/resonance/models/reso_proto_delta_e5_te.safetensors", use_gradio)
 			pass
 		if not os.path.isfile(proto_delta_stage_c):
 			# download_single_model(proto_delta_stage_c, "https://path.to/reso_proto_model")
 			pass
 		if not os.path.isfile(proto_epsil_stage_c):
-			download_single_model(proto_epsil_stage_c, "https://static.spectrometer.art/resonance/models/reso_proto_epsilon-e5.safetensors")
+			download_single_model(proto_epsil_stage_c, "https://static.spectrometer.art/resonance/models/reso_proto_epsilon-e5.safetensors", use_gradio)
 			pass
 
 	print_or_Info(use_gradio, status_messages["dl_done_proto"])
