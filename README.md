@@ -12,7 +12,7 @@ This GUI for Stable Cascade using ComfyUI as it's backend is experimental and no
 * Linux: Git Clone this repo then type in a terminal: `bash start_gui.sh`
 * Mac: Install Python 3.10.9 or later, Git Clone this repo then type in a terminal: `bash start_gui.sh`
 
-An installer browser tab should automatically launch and offer to automatically install models, ControlNets etc directly into your chosen ComfyUI install. If the machine is headless and runs over the network - use it's IP address instead. It's expected that CAPGUI and ComfyUI are to be installed on the same machine, but is not required due to ComfyUI's API. If you are separating the two - ensure you update the 
+An installer browser tab should automatically launch and offer to automatically install models, ControlNets etc directly into your chosen ComfyUI install. If the machine is headless and runs over the network - use it's IP address instead. It's expected that CAPGUI and ComfyUI are to be installed on the same machine, but is not required due to ComfyUI's API. If you are separating the two - ensure you update the remote instance manually.
 
 ## Updating:
 If you downloaded this repository with Git, just `git pull`.
