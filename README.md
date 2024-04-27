@@ -3,7 +3,7 @@
 ## Note:
 This GUI for Stable Cascade using ComfyUI as it's backend is experimental and not exactly foolproofed yet. Expect things to require a small amount of manual work to occur by the end user before it's fully usable.
 
-**ComfyUI is a hard requirement for local generations currently.**
+**ComfyUI's backend is a hard requirement for local generations currently.**
 
 ## Quick Start:
 
