@@ -6,11 +6,15 @@ This GUI for Stable Cascade using ComfyUI as it's backend is experimental and no
 **ComfyUI's backend is a hard requirement for local generations currently.**
 
 ## Quick Start:
-* Universal: Install ComfyUI and it's dependancies, for Windows, use the portable install, or use your existing ComfyUI installation.
+* All: Install ComfyUI and it's dependancies, for Windows, use the portable install, or use your existing ComfyUI installation.
 
 * Windows: Install Python 3.10.9 or later, Git Clone this repo then: double click `start_gui.bat`
-* Linux: Git Clone this repo then type in a terminal: `bash start_gui.sh`
-* Mac: Install Python 3.10.9 or later, Git Clone this repo then type in a terminal: `bash start_gui.sh`
+* Linux: Install Python 3.10.9 or later, `pip install -r requirements.txt`, run `python cap_app_installer.py --gradio` then `python cap_app.py`.
+* Mac: Install Python 3.10.9 or later, `pip install -r requirements.txt`, run `python cap_app_installer.py --gradio` then `python cap_app.py`.
+
+These instructions don't work until venv support on Linux works:
+* Linux: Install Python 3.10.9 or later, ~~Git Clone this repo then type in a terminal: `bash start_gui.sh`~~
+* Mac: Install Python 3.10.9 or later, ~~Git Clone this repo then type in a terminal: `bash start_gui.sh`~~
 
 An installer browser tab should automatically launch and offer to automatically install models, ControlNets etc directly into your chosen ComfyUI install. If the machine is headless and runs over the network - use it's IP address instead. It's expected that CAPGUI and ComfyUI are to be installed on the same machine, but is not required due to ComfyUI's API. If you are separating the two - ensure you update the remote instance manually.
 
