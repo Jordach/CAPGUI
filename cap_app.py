@@ -115,7 +115,7 @@ appended_script = '<script type="text/javascript" src="file=custom_js.js"></scri
 
 def new_resp(*args, **kwargs):
 	new_response = cap_util.gradio_response_header(*args, **kwargs)
-	new_response.body = new_response.body.replace(b'</head>', f"{appended_script}</head>".encode("utf8"))
+	new_response.body = new_response.body.replace(b'</head>', f"{appended_script}?{os.path.getmtime('custom_js.js')}</head>".encode("utf8"))
 	new_response.init_headers()
 	return new_response
 
