@@ -6,6 +6,7 @@ import websocket
 import os
 import argparse
 import json
+import time
 import sys
 parser = argparse.ArgumentParser(description="CAPGUI Gradio based installer.")
 parser.add_argument("--gradio", default=False, action="store_true", help="Whether to use Gradio")
@@ -36,8 +37,13 @@ if "comfy_uuid" not in cap_util.gui_default_settings:
 	cap_util.save_config()
 
 if args.update_nodes:
-	print("Please restart ComfyUI.")
-
+	# Check for existence of certain ComfyUI pathings:
+	comfy_install_state = cap_installer.test_comfyui_install(cap_util.gui_default_settings["comfy_path"])
+	if comfy_install_state > 0:
+		print(cap_installer.comfy_check_messages[comfy_install_state])
+	else:
+		cap_installer.install_CAPGUI_nodes()
+		print("Please restart ComfyUI to use the updated nodes and features.")
 elif args.gradio:
 	with gr.Blocks(title="CAPGUI Easy Installer", analytics_enabled=False) as app:
 		with gr.Accordion(label="ComfyUI Settings"):
@@ -73,30 +79,10 @@ elif args.gradio:
 			exit_installer = gr.Button("Exit Installer", variant="stop")
 
 		def validate_comfyui_settings(path, address, port):
-			if "~" in path:
-				return "Do not use shell expanding characters such as ~ which expands to /home/username on macOS and Linux.", gr.Accordion(visible=False)
-
-			# Check for existence of ComfyUI base dir:
-			if not os.path.exists(path):
-				return "The root folder for ComfyUI does not exist. Are you sure this is a ComfyUI path?", gr.Accordion(visible=False)
-
 			# Check for existence of certain ComfyUI pathings:
-			check_custom_nodes = os.path.join(path, "custom_nodes/")
-			if not os.path.exists(check_custom_nodes):
-				return "The custom_nodes folder of ComfyUI does not exist. Is this a real installation of ComfyUI?", gr.Accordion(visible=False)
-			check_websocket_node = os.path.join(check_custom_nodes, "websocket_image_save.py")
-			check_comfy_extas  = os.path.join(path, "comfy_extras/")
-			if not os.path.exists(check_comfy_extas):
-				return "The comfy_extras folder of ComfyUI does not exist. Is this a real installation of ComfyUI?", gr.Accordion(visible=False)
-			check_s_cascade    = os.path.join(check_comfy_extas, "nodes_stable_cascade.py")
-			if not os.path.isfile(check_s_cascade):
-				return "Your ComfyUI appears to be out of date and does not support Stable Cascade. Please update it.", gr.Accordion(visible=False)
-			check_models       = os.path.join(path, "models/")
-			if not os.path.exists(check_models):
-				return "The comfy_extras folder of ComfyUI does not exist. Is this a real installation of ComfyUI?", gr.Accordion(visible=False)
-			check_main_py      = os.path.join(path, "main.py")
-			if not os.path.isfile(check_main_py):
-				return "The main Python script of ComfyUI does not exist. Is this a real installation of ComfyUI?", gr.Accordion(visible=False)
+			comfy_install_state = cap_installer.test_comfyui_install(path)
+			if comfy_install_state > 0:
+				return cap_installer.comfy_check_messages[comfy_install_state], gr.Accordion(visible=False)
 
 			# Test ComfyUI websocket:
 			ws = websocket.WebSocket()

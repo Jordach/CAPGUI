@@ -7,6 +7,8 @@ import numpy as np
 from io import BytesIO
 import base64
 
+from .prompt_control import ScheduleToCond, ScheduleToModel, PromptToSchedule
+
 class UNETLoaderCAP:
 	@classmethod
 	def INPUT_TYPES(s):
@@ -68,10 +70,16 @@ NODE_CLASS_MAPPINGS = {
 	"UNETLoaderCAPGUI": UNETLoaderCAP,
 	"CLIPLoaderCAPGUI": CLIPLoaderCAP,
 	"Base64ToImageCAPGUI": B64Decoder,
+	"ScheduleToCondCAPGUI": ScheduleToCond,
+	"ScheduleToModelCAPGUI": ScheduleToModel,
+	"PromptToScheduleCAPGUI": PromptToSchedule,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
 	"UNETLoaderCAPGUI": "CAPGUI API UNETLoader",
 	"CLIPLoaderCAPGUI": "CAPGUI API CLIPLoader",
 	"Base64ToImageCAPGUI": "CAPGUI API Base64 Image Decoder",
+	"ScheduleToCondCAPGUI": "CAPGUI Schedule To Conditioning",
+	"ScheduleToModelCAPGUI": "CAPGUI Schedule To Model",
+	"PromptToScheduleCAPGUI": "CAPGUI Prompt To Schedule",
 }

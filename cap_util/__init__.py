@@ -289,8 +289,8 @@ def process_basic_txt2img(
 	# Stage C settings:
 
 	# Prompts
-	workflow["68"]["inputs"]["text"] = pos
-	workflow["7"]["inputs"]["text"]  = neg
+	workflow["97"]["inputs"]["text"] = pos
+	workflow["98"]["inputs"]["text"]  = neg
 
 	# Stage C KSampler
 	workflow["3"]["inputs"]["steps"] = steps_c

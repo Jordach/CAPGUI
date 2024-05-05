@@ -4,6 +4,52 @@ import shutil
 import gradio as gr
 import cap_util
 
+comfy_check_messages = []
+comfy_check_messages.append("Valid ComfyUI install detected.")
+comfy_check_messages.append("Do not use shell expanding characters such as ~ which expands to /home/username on macOS and Linux.")
+comfy_check_messages.append("The root folder for ComfyUI does not exist. Are you sure this is a ComfyUI path?")
+comfy_check_messages.append("The custom_nodes folder of ComfyUI does not exist. Is this a real installation of ComfyUI?")
+comfy_check_messages.append("The websocket API node doesn't exist. Is this an out of date installation of ComfyUI?")
+comfy_check_messages.append("The comfy_extras folder of ComfyUI does not exist. Is this a real installation of ComfyUI?")
+comfy_check_messages.append("Your ComfyUI appears to be out of date and does not support Stable Cascade. Please update it.")
+comfy_check_messages.append("The models folder of ComfyUI does not exist. Is this a real installation of ComfyUI?")
+comfy_check_messages.append("The main Python script of ComfyUI does not exist. Is this a real installation of ComfyUI?")
+
+def test_comfyui_install(path):
+	if "~" in path:
+		return 1
+
+	# Check for existence of ComfyUI base dir:
+	if not os.path.exists(path):
+		return 2
+
+	# Check for existence of certain ComfyUI pathings:
+	check_custom_nodes = os.path.join(path, "custom_nodes/")
+	if not os.path.exists(check_custom_nodes):
+		return 3
+
+	check_websocket_node = os.path.join(check_custom_nodes, "websocket_image_save.py")
+	if not os.path.exists(check_websocket_node):
+		return 4
+
+	check_comfy_extas = os.path.join(path, "comfy_extras/")
+	if not os.path.exists(check_comfy_extas):
+		return 5
+
+	check_s_cascade = os.path.join(check_comfy_extas, "nodes_stable_cascade.py")
+	if not os.path.isfile(check_s_cascade):
+		return 6
+	
+	check_models = os.path.join(path, "models/")
+	if not os.path.exists(check_models):
+		return 7
+
+	check_main_py = os.path.join(path, "main.py")
+	if not os.path.isfile(check_main_py):
+		return 8
+
+	return 0
+
 status_messages = {
 	"dl_fail": "Failed to download - is there a working HTTP connection?",
 
@@ -44,9 +90,7 @@ def download_single_model(path, url, ugr):
 
 def install_CAPGUI_nodes():
 	custom_nodes = os.path.join(cap_util.gui_default_settings["comfy_path"], "custom_nodes", "CAPGUI_Nodes")
-	if not os.path.exists(custom_nodes):
-		os.makedirs(custom_nodes)
-	shutil.copy(os.path.join("comfyui_nodes", "__init__.py"), os.path.join(custom_nodes, "__init__.py"))
+	shutil.copytree("comfyui_nodes", custom_nodes, dirs_exist_ok=True)
 
 def download_base_models(models_dict, use_gradio):
 	clip_folder = os.path.join(cap_util.gui_default_settings["comfy_path"], "models", "clip", "cascade")

@@ -30,7 +30,6 @@ echo Creating venv in directory %VENV_DIR% using python %PYTHON_FULLNAME%
 %PYTHON_FULLNAME% -m venv "%VENV_DIR%" >tmp/stdout.txt 2>tmp/stderr.txt
 set PYTHON="%VENV_DIR%\Scripts\Python.exe"
 %PYTHON% -m pip install -r requirements.txt
-%PYTHON% cap_app_install.py --gradio
 if %ERRORLEVEL% == 0 goto :launch
 echo Unable to create venv in directory "%VENV_DIR%"
 goto :show_stdout_stderr
@@ -39,7 +38,7 @@ goto :show_stdout_stderr
 set PYTHON="%VENV_DIR%\Scripts\Python.exe"
 echo venv %PYTHON%
 
-%PYTHON% cap_app.py
+%PYTHON% cap_app_install.py --update_nodes
 pause
 exit /b
 

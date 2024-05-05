@@ -5,22 +5,22 @@ def get_txt2img():
 	{
 	"3": {
 		"inputs": {
-		"seed": 42069,
+		"seed": 665095051496395,
 		"steps": 20,
 		"cfg": 4,
 		"sampler_name": "euler_ancestral",
 		"scheduler": "simple",
 		"denoise": 1,
 		"model": [
-			"73",
+			"96",
 			0
 		],
 		"positive": [
-			"68",
+			"94",
 			0
 		],
 		"negative": [
-			"7",
+			"95",
 			0
 		],
 		"latent_image": [
@@ -30,42 +30,12 @@ def get_txt2img():
 		},
 		"class_type": "KSampler",
 		"_meta": {
-		"title": "Stage C Sampling"
-		}
-	},
-	"7": {
-		"inputs": {
-		"text": "",
-		"clip": [
-			"75",
-			0
-		]
-		},
-		"class_type": "CLIPTextEncode",
-		"_meta": {
-		"title": "Negative Prompt"
-		}
-	},
-	"8": {
-		"inputs": {
-		"tile_size": 1024,
-		"samples": [
-			"33",
-			0
-		],
-		"vae": [
-			"47",
-			0
-		]
-		},
-		"class_type": "VAEDecodeTiled",
-		"_meta": {
-		"title": "VAE Decode (Tiled)"
+		"title": "KSampler C"
 		}
 	},
 	"33": {
 		"inputs": {
-		"seed": 80085,
+		"seed": 679789055914725,
 		"steps": 10,
 		"cfg": 1.5,
 		"sampler_name": "euler_ancestral",
@@ -90,25 +60,25 @@ def get_txt2img():
 		},
 		"class_type": "KSampler",
 		"_meta": {
-		"title": "Stage B Sampling"
+		"title": "KSampler B"
 		}
 	},
 	"34": {
 		"inputs": {
 		"width": 1024,
 		"height": 1024,
-		"compression": 42,
-		"batch_size": 4
+		"compression": 32,
+		"batch_size": 1
 		},
 		"class_type": "StableCascade_EmptyLatentImage",
 		"_meta": {
-		"title": "StableCascade_EmptyLatentImage"
+		"title": "Image Size"
 		}
 	},
 	"36": {
 		"inputs": {
 		"conditioning": [
-			"68",
+			"94",
 			0
 		],
 		"stage_c": [
@@ -123,11 +93,11 @@ def get_txt2img():
 	},
 	"47": {
 		"inputs": {
-		"vae_name": "cascade/stage_a.safetensors"
+		"vae_name": ""
 		},
 		"class_type": "VAELoader",
 		"_meta": {
-		"title": "Stage A"
+		"title": "Load Stage A"
 		}
 	},
 	"63": {
@@ -140,20 +110,7 @@ def get_txt2img():
 		},
 		"class_type": "CLIPTextEncode",
 		"_meta": {
-		"title": "Empty Stage B Negative"
-		}
-	},
-	"68": {
-		"inputs": {
-		"text": "",
-		"clip": [
-			"75",
-			0
-		]
-		},
-		"class_type": "CLIPTextEncode",
-		"_meta": {
-		"title": "Positive Prompt"
+		"title": "Empty Stage B Neg"
 		}
 	},
 	"73": {
@@ -166,7 +123,7 @@ def get_txt2img():
 		},
 		"class_type": "ModelSamplingStableCascade",
 		"_meta": {
-		"title": "ModelSamplingStableCascade"
+		"title": "Shift"
 		}
 	},
 	"74": {
@@ -175,7 +132,7 @@ def get_txt2img():
 		},
 		"class_type": "UNETLoaderCAPGUI",
 		"_meta": {
-		"title": "Stage C UNETLoader"
+		"title": "CAPGUI API UNETLoader"
 		}
 	},
 	"75": {
@@ -185,7 +142,7 @@ def get_txt2img():
 		},
 		"class_type": "CLIPLoaderCAPGUI",
 		"_meta": {
-		"title": "Cascade CLIP"
+		"title": "CAPGUI API CLIPLoader"
 		}
 	},
 	"77": {
@@ -194,19 +151,19 @@ def get_txt2img():
 		},
 		"class_type": "UNETLoaderCAPGUI",
 		"_meta": {
-		"title": "Stage B UNETLoader"
+		"title": "CAPGUI API UNETLoader"
 		}
 	},
 	"save_image_websocket_node": {
 		"inputs": {
 		"images": [
-			"8",
+			"93",
 			0
 		]
 		},
 		"class_type": "SaveImageWebsocket",
 		"_meta": {
-		"title": "SaveImageWebsocket"
+		"title": "save_image_websocket_node"
 		}
 	},
 	"89": {
@@ -235,6 +192,89 @@ def get_txt2img():
 		"class_type": "LatentFromBatch",
 		"_meta": {
 		"title": "Latent From Batch C"
+		}
+	},
+	"93": {
+		"inputs": {
+		"tile_size": 1024,
+		"samples": [
+			"33",
+			0
+		],
+		"vae": [
+			"47",
+			0
+		]
+		},
+		"class_type": "VAEDecodeTiled",
+		"_meta": {
+		"title": "Tiled VAE Decode"
+		}
+	},
+	"94": {
+		"inputs": {
+		"clip": [
+			"75",
+			0
+		],
+		"prompt_schedule": [
+			"97",
+			0
+		]
+		},
+		"class_type": "ScheduleToCondCAPGUI",
+		"_meta": {
+		"title": "Prompt Cond"
+		}
+	},
+	"95": {
+		"inputs": {
+		"clip": [
+			"75",
+			0
+		],
+		"prompt_schedule": [
+			"98",
+			0
+		]
+		},
+		"class_type": "ScheduleToCondCAPGUI",
+		"_meta": {
+		"title": "Negative Cond"
+		}
+	},
+	"96": {
+		"inputs": {
+		"model": [
+			"73",
+			0
+		],
+		"prompt_schedule": [
+			"97",
+			0
+		]
+		},
+		"class_type": "ScheduleToModelCAPGUI",
+		"_meta": {
+		"title": "LoRA Loader"
+		}
+	},
+	"97": {
+		"inputs": {
+		"text": ""
+		},
+		"class_type": "PromptToScheduleCAPGUI",
+		"_meta": {
+		"title": "Prompt"
+		}
+	},
+	"98": {
+		"inputs": {
+		"text": ""
+		},
+		"class_type": "PromptToScheduleCAPGUI",
+		"_meta": {
+		"title": "Negative Prompt"
 		}
 	}
 	}
