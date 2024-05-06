@@ -4,8 +4,8 @@ from typing import Iterator, List
 from copy import copy
 import warnings
 
-from lark_embed.exceptions import UnexpectedToken
-from lark_embed.lexer import Token, LexerThread
+from ..exceptions import UnexpectedToken
+from ..lexer import Token, LexerThread
 
 ###{standalone
 

@@ -4,7 +4,7 @@ from ..lexer import Token, LexerThread
 from ..common import ParserCallbacks
 
 from .lalr_analysis import Shift, ParseTableBase, StateT
-from lark_embed.exceptions import UnexpectedToken
+from ..exceptions import UnexpectedToken
 
 ###{standalone
 
