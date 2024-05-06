@@ -195,11 +195,15 @@ def download_misc_models(models_dict, use_gradio):
 		print_or_Info(use_gradio, status_messages["dl_start_misc"])
 		base_effnet_enc_path = os.path.join(vae_folder, "effnet_encoder.safetensors")
 		base_stage_a_path    = os.path.join(vae_folder, "stage_a.safetensors")
+		base_stage_a_hq_path = os.path.join(vae_folder, "stage_a_ft_hq.safetensors")
 		if not os.path.isfile(base_effnet_enc_path):
 			download_single_model(base_effnet_enc_path, "https://huggingface.co/stabilityai/stable-cascade/resolve/main/effnet_encoder.safetensors?download=true", use_gradio)
 		
 		if not os.path.isfile(base_stage_a_path):
 			download_single_model(base_stage_a_path, "https://huggingface.co/stabilityai/stable-cascade/resolve/main/stage_a.safetensors?download=true", use_gradio)
+
+		if not os.path.isfile(base_stage_a_hq_path):
+			download_single_model(base_stage_a_hq_path, "https://huggingface.co/madebyollin/stage-a-ft-hq/resolve/main/stage_a_ft_hq.safetensors?download=true", use_gradio)
 		print_or_Info(use_gradio, status_messages["dl_done_misc"])
 
 def get_test_workflow():

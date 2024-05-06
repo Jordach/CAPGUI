@@ -111,11 +111,11 @@ with gr.Blocks(title=f"{'[ANON MODE] ' if cap_util.gui_default_settings['ui_anon
 if not hasattr(cap_util, "gradio_response_header"):
 	cap_util.gradio_response_header = gr.routes.templates.TemplateResponse
 
-appended_script = '<script type="text/javascript" src="file=custom_js.js"></script>\n'
+appended_script = f'<script type="text/javascript" src="file=custom_js.js?{os.path.getmtime("custom_js.js")}"></script>\n'
 
 def new_resp(*args, **kwargs):
 	new_response = cap_util.gradio_response_header(*args, **kwargs)
-	new_response.body = new_response.body.replace(b'</head>', f"{appended_script}?{os.path.getmtime('custom_js.js')}</head>".encode("utf8"))
+	new_response.body = new_response.body.replace(b'</head>', f"{appended_script}</head>".encode("utf8"))
 	new_response.init_headers()
 	return new_response
 

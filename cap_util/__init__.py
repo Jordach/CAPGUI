@@ -279,7 +279,7 @@ def process_basic_txt2img(
 		pos, neg, steps_c, seed_c, width, height, 
 		cfg_c, batch, compression, shift, latent_id, 
 		seed_b, cfg_b, steps_b, stage_b, 
-		stage_c, clip_model, backend
+		stage_c, clip_model, backend, use_hq_stage_a
 ):
 	global gui_default_settings
 	global ws
@@ -331,7 +331,10 @@ def process_basic_txt2img(
 		workflow["90"]["inputs"]["length"]      = batch
 
 	# Bugfix for the Stage A model being missing depending on platform with a different separator:
-	workflow["47"]["inputs"]["vae_name"] = os.path.join("cascade", "stage_a.safetensors")
+	if use_hq_stage_a:
+		workflow["47"]["inputs"]["vae_name"] = os.path.join("cascade", "stage_a_ft_hq.safetensors")
+	else:
+		workflow["47"]["inputs"]["vae_name"] = os.path.join("cascade", "stage_a.safetensors")
 
 	# This is for saving images so they retain their metadata
 	json_workflow = json.dumps(workflow).encode('utf-8')
@@ -363,8 +366,9 @@ def process_basic_txt2img(
 		gen_info += f"Refiner Steps: **{steps_b}**\n"
 		gen_info += f"Refiner Seed: **{workflow['33']['inputs']['seed']}**\n"
 		gen_info += f"Refiner CFG: **{cfg_b}**\n"
-		gen_info += f"Refiner Model: **{stage_b}**\n\n"
-		# gen_info += f""
+		gen_info += f"Refiner Model: **{stage_b}**\n"
+		gen_info += f'Decoder: **{workflow["47"]["inputs"]["vae_name"]}**\n\n'
+
 		gen_info += f"Total Time: **{timer_finish}s**\n"
 		gen_info += f"Note: Gradio's image load and display routine is slow and can introduce it's own delay with regards to generated images."
 		return gallery_images, gen_info

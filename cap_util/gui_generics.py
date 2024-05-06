@@ -172,6 +172,7 @@ def get_generation_settings_column(global_ctx, local_ctx):
 		)
 	
 	with gr.Accordion("Extras:", open=False, elem_id="extra_settings"):
+		local_ctx["use_stage_a_hq"] = gr.Checkbox(True, label="Use High Quality Decoder?", info="Uses a custom finetune of Stage A to decode latents with less overall blur.")
 		gr.Markdown("To be continued")
 	
 	# Make the swapping of aspect ratios universal across tabs
