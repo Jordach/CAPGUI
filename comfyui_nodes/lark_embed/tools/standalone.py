@@ -42,12 +42,12 @@ from collections import defaultdict
 from functools import partial
 from argparse import ArgumentParser
 
-import lark
-from lark.tools import lalr_argparser, build_lalr, make_warnings_comments
+import lark_embed
+from lark_embed.tools import lalr_argparser, build_lalr, make_warnings_comments
 
 
-from lark.grammar import Rule
-from lark.lexer import TerminalDef
+from lark_embed.grammar import Rule
+from lark_embed.lexer import TerminalDef
 
 _dir = path.dirname(__file__)
 _larkdir = path.join(_dir, path.pardir)

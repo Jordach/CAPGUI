@@ -8,7 +8,7 @@ from .exceptions import (
     UnexpectedInput,
     UnexpectedToken,
 )
-from .lark import Lark
+from .lark_embed import Lark
 from .lexer import Token
 from .tree import ParseTree, Tree
 from .utils import logger

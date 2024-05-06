@@ -3,7 +3,7 @@
 
 from typing import Dict, Callable, Iterable, Optional
 
-from .lark import Lark
+from .lark_embed import Lark
 from .tree import Tree, ParseTree
 from .visitors import Transformer_InPlace
 from .lexer import Token, PatternStr, TerminalDef
