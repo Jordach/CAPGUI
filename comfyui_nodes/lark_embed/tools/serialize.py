@@ -1,9 +1,9 @@
 import sys
 import json
 
-from lark_embed.grammar import Rule
-from lark_embed.lexer import TerminalDef
-from lark_embed.tools import lalr_argparser, build_lalr
+from ..grammar import Rule
+from ..lexer import TerminalDef
+from ..tools import lalr_argparser, build_lalr
 
 import argparse
 

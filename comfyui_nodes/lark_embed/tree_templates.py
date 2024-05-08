@@ -6,8 +6,9 @@ A tree templates is a tree that contains nodes that are template variables.
 
 from typing import Union, Optional, Mapping, Dict, Tuple, Iterator
 
-from lark_embed import Tree, Transformer
-from lark_embed.exceptions import MissingVariableError
+from .tree import Tree
+from .visitors import Transformer
+from .exceptions import MissingVariableError
 
 Branch = Union[Tree[str], str]
 TreeOrCode = Union[Tree[str], str]

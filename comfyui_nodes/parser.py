@@ -7,10 +7,10 @@ prompt_parser = lark_embed.Lark(
 !start: (prompt | /[][():|]/+)*
 prompt: (emphasized | embedding | scheduled | alternate | sequence | interpolate | loraspec | PLAIN | /</ | />/ | WHITESPACE)+
 !emphasized: "(" prompt? ")"
-		| "(" prompt ":" prompt ")"
-		| "[" prompt "]"
+        | "(" prompt ":" prompt ")"
+        | "[" prompt "]"
 scheduled: "[" [prompt ":"] [prompt] ":" _WS? NUMBER ["," NUMBER] "]"
-		| "[" [prompt ":"] [prompt] ":" _WS? TAG "]"
+        | "[" [prompt ":"] [prompt] ":" _WS? TAG "]"
 sequence:  "[SEQ" ":" [prompt] ":" NUMBER (":" [prompt] ":" NUMBER)+ "]"
 interpolate.100: "[INT" ":" interp_prompts ":" interp_steps "]"
 interp_prompts: prompt (":" [prompt])+

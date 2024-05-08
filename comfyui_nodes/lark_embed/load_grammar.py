@@ -860,8 +860,7 @@ class FromPackageLoader:
 
         raise IOError('Cannot find grammar in given paths') from err
 
-
-stdlib_loader = FromPackageLoader('lark', IMPORT_PATHS)
+stdlib_loader = FromPackageLoader('custom_nodes.CAPGUI_Nodes.lark_embed', IMPORT_PATHS)
 
 
 
