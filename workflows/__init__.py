@@ -117,7 +117,7 @@ def get_txt2img():
 		"inputs": {
 		"shift": 2,
 		"model": [
-			"74",
+			"96",
 			0
 		]
 		},
@@ -246,7 +246,7 @@ def get_txt2img():
 	"96": {
 		"inputs": {
 		"model": [
-			"73",
+			"74",
 			0
 		],
 		"prompt_schedule": [
@@ -288,289 +288,329 @@ def get_txt2img_canny():
 def get_basic_img2img():
 	workflow = """
 	{
-	"3": {
-		"inputs": {
-		"seed": 42069,
-		"steps": 20,
-		"cfg": 4,
-		"sampler_name": "euler_ancestral",
-		"scheduler": "simple",
-		"denoise": 1,
-		"model": [
-			"73",
-			0
-		],
-		"positive": [
-			"68",
-			0
-		],
-		"negative": [
-			"7",
-			0
-		],
-		"latent_image": [
-			"97",
-			0
-		]
+		"3": {
+			"inputs": {
+			"seed": 227279383,
+			"steps": 20,
+			"cfg": 4,
+			"sampler_name": "euler_ancestral",
+			"scheduler": "simple",
+			"denoise": 0.5,
+			"model": [
+				"104",
+				0
+			],
+			"positive": [
+				"103",
+				0
+			],
+			"negative": [
+				"105",
+				0
+			],
+			"latent_image": [
+				"97",
+				0
+			]
+			},
+			"class_type": "KSampler",
+			"_meta": {
+			"title": "KSampler C"
+			}
 		},
-		"class_type": "KSampler",
-		"_meta": {
-		"title": "Stage C Sampling"
-		}
-	},
-	"7": {
-		"inputs": {
-		"text": "",
-		"clip": [
-			"75",
-			0
-		]
+		"33": {
+			"inputs": {
+			"seed": 2011967413,
+			"steps": 12,
+			"cfg": 1.5,
+			"sampler_name": "euler_ancestral",
+			"scheduler": "simple",
+			"denoise": 1,
+			"model": [
+				"77",
+				0
+			],
+			"positive": [
+				"36",
+				0
+			],
+			"negative": [
+				"102",
+				0
+			],
+			"latent_image": [
+				"99",
+				0
+			]
+			},
+			"class_type": "KSampler",
+			"_meta": {
+			"title": "KSampler B"
+			}
 		},
-		"class_type": "CLIPTextEncode",
-		"_meta": {
-		"title": "Negative Prompt"
-		}
-	},
-	"33": {
-		"inputs": {
-		"seed": 80085,
-		"steps": 10,
-		"cfg": 1.5,
-		"sampler_name": "euler_ancestral",
-		"scheduler": "simple",
-		"denoise": 1,
-		"model": [
-			"77",
-			0
-		],
-		"positive": [
-			"36",
-			0
-		],
-		"negative": [
-			"63",
-			0
-		],
-		"latent_image": [
-			"99",
-			0
-		]
+		"36": {
+			"inputs": {
+			"conditioning": [
+				"103",
+				0
+			],
+			"stage_c": [
+				"90",
+				0
+			]
+			},
+			"class_type": "StableCascade_StageB_Conditioning",
+			"_meta": {
+			"title": "StableCascade_StageB_Conditioning"
+			}
 		},
-		"class_type": "KSampler",
-		"_meta": {
-		"title": "Stage B Sampling"
-		}
-	},
-	"36": {
-		"inputs": {
-		"conditioning": [
-			"68",
-			0
-		],
-		"stage_c": [
-			"90",
-			0
-		]
+		"47": {
+			"inputs": {
+			"vae_name": ""
+			},
+			"class_type": "VAELoader",
+			"_meta": {
+			"title": "Load VAE Decoder"
+			}
 		},
-		"class_type": "StableCascade_StageB_Conditioning",
-		"_meta": {
-		"title": "StableCascade_StageB_Conditioning"
-		}
-	},
-	"47": {
-		"inputs": {
-		"vae_name": ""
+		"73": {
+			"inputs": {
+			"shift": 2,
+			"model": [
+				"104",
+				0
+			]
+			},
+			"class_type": "ModelSamplingStableCascade",
+			"_meta": {
+			"title": "ModelSamplingStableCascade"
+			}
 		},
-		"class_type": "VAELoader",
-		"_meta": {
-		"title": "Stage A"
-		}
-	},
-	"63": {
-		"inputs": {
-		"text": "",
-		"clip": [
-			"75",
-			0
-		]
+		"74": {
+			"inputs": {
+			"unet_name": ""
+			},
+			"class_type": "UNETLoaderCAPGUI",
+			"_meta": {
+			"title": "Stage C Loader"
+			}
 		},
-		"class_type": "CLIPTextEncode",
-		"_meta": {
-		"title": "Empty Stage B Negative"
-		}
-	},
-	"68": {
-		"inputs": {
-		"text": "",
-		"clip": [
-			"75",
-			0
-		]
+		"75": {
+			"inputs": {
+			"clip_name": "",
+			"type": "stable_cascade"
+			},
+			"class_type": "CLIPLoaderCAPGUI",
+			"_meta": {
+			"title": "CLIP Loader"
+			}
 		},
-		"class_type": "CLIPTextEncode",
-		"_meta": {
-		"title": "Positive Prompt"
-		}
-	},
-	"73": {
-		"inputs": {
-		"shift": 2,
-		"model": [
-			"74",
-			0
-		]
+		"77": {
+			"inputs": {
+			"unet_name": "cascade/stage_b/stage_b_bf16.safetensors"
+			},
+			"class_type": "UNETLoaderCAPGUI",
+			"_meta": {
+			"title": "Stage B Loader"
+			}
 		},
-		"class_type": "ModelSamplingStableCascade",
-		"_meta": {
-		"title": "ModelSamplingStableCascade"
-		}
-	},
-	"74": {
-		"inputs": {
-		"unet_name": ""
+		"90": {
+			"inputs": {
+			"batch_index": 0,
+			"length": 1,
+			"samples": [
+				"3",
+				0
+			]
+			},
+			"class_type": "LatentFromBatch",
+			"_meta": {
+			"title": "Latent From Batch C"
+			}
 		},
-		"class_type": "UNETLoaderCAPGUI",
-		"_meta": {
-		"title": "Stage C UNETLoader"
-		}
-	},
-	"75": {
-		"inputs": {
-		"clip_name": "",
-		"type": "stable_cascade"
+		"93": {
+			"inputs": {
+			"tile_size": 1024,
+			"samples": [
+				"33",
+				0
+			],
+			"vae": [
+				"47",
+				0
+			]
+			},
+			"class_type": "VAEDecodeTiled",
+			"_meta": {
+			"title": "VAE Decode (Tiled)"
+			}
 		},
-		"class_type": "CLIPLoaderCAPGUI",
-		"_meta": {
-		"title": "Cascade CLIP"
-		}
-	},
-	"77": {
-		"inputs": {
-		"unet_name": ""
+		"94": {
+			"inputs": {
+			"vae_name": ""
+			},
+			"class_type": "VAELoader",
+			"_meta": {
+			"title": "Load VAE Encoder"
+			}
 		},
-		"class_type": "UNETLoaderCAPGUI",
-		"_meta": {
-		"title": "Stage B UNETLoader"
-		}
-	},
-	"save_image_websocket_node": {
-		"inputs": {
-		"images": [
-			"93",
-			0
-		]
+		"95": {
+			"inputs": {
+			"compression": 42,
+			"image": [
+				"100",
+				0
+			],
+			"vae": [
+				"94",
+				0
+			]
+			},
+			"class_type": "StableCascade_StageC_VAEEncode",
+			"_meta": {
+			"title": "StableCascade_StageC_VAEEncode"
+			}
 		},
-		"class_type": "SaveImageWebsocket",
-		"_meta": {
-		"title": "SaveImageWebsocket"
-		}
-	},
-	"90": {
-		"inputs": {
-		"batch_index": 0,
-		"length": 1,
-		"samples": [
-			"3",
-			0
-		]
+		"96": {
+			"inputs": {
+			"amount": 1,
+			"samples": [
+				"95",
+				1
+			]
+			},
+			"class_type": "RepeatLatentBatch",
+			"_meta": {
+			"title": "Repeat Latent Batch B"
+			}
 		},
-		"class_type": "LatentFromBatch",
-		"_meta": {
-		"title": "Latent From Batch C"
-		}
-	},
-	"93": {
-		"inputs": {
-		"tile_size": 1024,
-		"samples": [
-			"33",
-			0
-		],
-		"vae": [
-			"47",
-			0
-		]
+		"97": {
+			"inputs": {
+			"amount": 1,
+			"samples": [
+				"95",
+				0
+			]
+			},
+			"class_type": "RepeatLatentBatch",
+			"_meta": {
+			"title": "Repeat Latent Batch C"
+			}
 		},
-		"class_type": "VAEDecodeTiled",
-		"_meta": {
-		"title": "VAE Decode (Tiled)"
-		}
-	},
-	"94": {
-		"inputs": {
-		"vae_name": "cascade\\effnet_encoder.safetensors"
+		"99": {
+			"inputs": {
+			"batch_index": 0,
+			"length": 1,
+			"samples": [
+				"96",
+				0
+			]
+			},
+			"class_type": "LatentFromBatch",
+			"_meta": {
+			"title": "Latent From Batch B"
+			}
 		},
-		"class_type": "VAELoader",
-		"_meta": {
-		"title": "Load VAE"
-		}
-	},
-	"95": {
-		"inputs": {
-		"compression": 42,
-		"image": [
-			"100",
-			0
-		],
-		"vae": [
-			"94",
-			0
-		]
+		"100": {
+			"inputs": {
+			"base64_image": ""
+			},
+			"class_type": "Base64ToImageCAPGUI",
+			"_meta": {
+			"title": "CAPGUI API Base64 Image Decoder"
+			}
 		},
-		"class_type": "StableCascade_StageC_VAEEncode",
-		"_meta": {
-		"title": "Stage C Encode"
-		}
-	},
-	"96": {
-		"inputs": {
-		"amount": 1,
-		"samples": [
-			"95",
-			1
-		]
+		"101": {
+			"inputs": {
+			"text": ""
+			},
+			"class_type": "PromptToScheduleCAPGUI",
+			"_meta": {
+			"title": "Positive Prompt"
+			}
 		},
-		"class_type": "RepeatLatentBatch",
-		"_meta": {
-		"title": "Repeat Latent Batch B"
-		}
-	},
-	"97": {
-		"inputs": {
-		"amount": 1,
-		"samples": [
-			"95",
-			0
-		]
+		"102": {
+			"inputs": {
+			"text": "",
+			"clip": [
+				"75",
+				0
+			]
+			},
+			"class_type": "CLIPTextEncode",
+			"_meta": {
+			"title": "Empty Negative"
+			}
 		},
-		"class_type": "RepeatLatentBatch",
-		"_meta": {
-		"title": "Repeat Latent Batch C"
-		}
-	},
-	"99": {
-		"inputs": {
-		"batch_index": 3,
-		"length": 1,
-		"samples": [
-			"96",
-			0
-		]
+		"103": {
+			"inputs": {
+			"clip": [
+				"75",
+				0
+			],
+			"prompt_schedule": [
+				"101",
+				0
+			]
+			},
+			"class_type": "ScheduleToCondCAPGUI",
+			"_meta": {
+			"title": "CAPGUI Schedule To Conditioning"
+			}
 		},
-		"class_type": "LatentFromBatch",
-		"_meta": {
-		"title": "Latent From Batch B"
-		}
-	},
-	"100": {
-		"inputs": {
-		"base64_image": ""
+		"104": {
+			"inputs": {
+			"model": [
+				"74",
+				0
+			],
+			"prompt_schedule": [
+				"101",
+				0
+			]
+			},
+			"class_type": "ScheduleToModelCAPGUI",
+			"_meta": {
+			"title": "CAPGUI Schedule To Model"
+			}
 		},
-		"class_type": "Base64ToImageCAPGUI",
-		"_meta": {
-		"title": "CAPGUI API Base64 Image Decoder"
+		"105": {
+			"inputs": {
+			"clip": [
+				"75",
+				0
+			],
+			"prompt_schedule": [
+				"106",
+				0
+			]
+			},
+			"class_type": "ScheduleToCondCAPGUI",
+			"_meta": {
+			"title": "CAPGUI Schedule To Conditioning"
+			}
+		},
+		"106": {
+			"inputs": {
+			"text": ""
+			},
+			"class_type": "PromptToScheduleCAPGUI",
+			"_meta": {
+			"title": "Negative Prompt"
+			}
+		},
+		"save_image_websocket_node": {
+			"inputs": {
+			"images": [
+				"93",
+				0
+			]
+			},
+			"class_type": "SaveImageWebsocket",
+			"_meta": {
+			"title": "SaveImageWebsocket"
+			}
 		}
-	}
 	}
 	"""
 

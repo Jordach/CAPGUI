@@ -21,7 +21,7 @@ def txt2img_tab_post_hook(global_ctx, local_ctx):
 			local_ctx["stage_c_compression"], local_ctx["stage_c_shift"],  local_ctx["stage_c_single_latent"],
 			local_ctx["stage_b_seed"],        local_ctx["stage_b_cfg"],    local_ctx["stage_b_steps"],
 			global_ctx["topbar"]["stage_b"], global_ctx["topbar"]["stage_c"], global_ctx["topbar"]["clip"], global_ctx["topbar"]["backend"],
-			local_ctx["use_stage_a_hq"],
+			local_ctx["use_stage_a_hq"],      local_ctx["stage_c_save_images"]
 		],
 		outputs=[local_ctx["gallery"], local_ctx["gen_info_box"]],
 		show_progress="minimal", 

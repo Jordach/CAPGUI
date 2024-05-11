@@ -100,6 +100,7 @@ import shutil
 import base64
 import math
 import hashlib
+from cap_util.metadata import save_image_with_meta
 
 def load_config():
 	global gui_default_settings
@@ -143,6 +144,20 @@ def clamp(val, min, max):
 		return max
 	else:
 		return val
+
+def get_image_save_path(subfolder):
+	current_date = time.strftime("%Y-%m-%d")
+	path = os.path.join("generations", subfolder, current_date)
+	os.makedirs(path, exist_ok=True)
+	counter = 0
+	while True:
+		filename = f"image_{counter:05}.png"
+		full_path = os.path.join(path, filename)
+		if os.path.exists(full_path):
+			counter += 1
+			continue
+		else:
+			return full_path
 
 def compression_curve(x):
 	return math.pow(x, 0.9)
@@ -241,6 +256,63 @@ def image_to_b64(image):
 	image.save(bytes_buffer, format="png")
 	return base64.b64encode(bytes_buffer.getvalue()).decode()
 
+def create_markdown_infotext(
+	pos, neg, width, height, 
+	c_steps, c_seed, c_cfg, batch, 
+	compression, shift, b_steps, b_seed,
+	b_cfg, stage_b, stage_c, clip, use_hq
+):
+	gi_pos = pos.strip().replace('\\', '\\\\')
+	gi_neg = neg.strip().replace('\\', '\\\\')
+	infotext = f"""Prompt: **{gi_pos}**
+Negative Prompt: **{gi_neg}**
+Resolution: **{width}x{height}**
+Compression: **{compression}**
+Batch Size: **{batch}**
+
+Base Steps: **{c_steps}**
+Base Seed: **{c_seed}**
+Base CFG: **{c_cfg}**
+Base Shift: **{shift}**
+Base Model: **{stage_c}**
+CLIP Model: **{clip}**
+
+Refiner Steps: **{b_steps}**
+Refiner Seed: **{b_seed}**
+Refiner CFG: **{b_cfg}**
+Refiner Model: **{stage_b}**
+High Quality Decoder: **{'True' if use_hq else 'False'}**
+"""
+	return infotext
+
+# Easier to mechanically process down the line
+def create_embed_text(
+	pos, neg, width, height, 
+	c_steps, c_seed, c_cfg, batch, 
+	compression, shift, b_steps, b_seed,
+	b_cfg, stage_b, stage_c, clip, use_hq
+):
+	gi_pos = pos.strip()
+	gi_neg = neg.strip()
+	embedtext = f"""Prompt: {gi_pos}
+Negative Prompt: {gi_neg}
+Resolution: {width}x{height}
+Compression: {compression}
+Batch Size: {batch}
+Base Steps: {c_steps}
+Base Seed: {c_seed}
+Base CFG: {c_cfg}
+Base Shift: {shift}
+Base Model: {stage_c}
+CLIP Model: {clip}
+Refiner Steps: {b_steps}
+Refiner Seed: {b_seed}
+Refiner CFG: {b_cfg}
+Refiner Model: {stage_b}
+High Quality Decoder: {'True' if use_hq else 'False'}
+"""
+	return embedtext
+
 # Handle ComfyUI generation workflow specific actions:
 def queue_workflow_websocket(workflow):
 	p = {"prompt": workflow, "client_id": gui_default_settings["comfy_uuid"]}
@@ -279,7 +351,8 @@ def process_basic_txt2img(
 		pos, neg, steps_c, seed_c, width, height, 
 		cfg_c, batch, compression, shift, latent_id, 
 		seed_b, cfg_b, steps_b, stage_b, 
-		stage_c, clip_model, backend, use_hq_stage_a
+		stage_c, clip_model, backend, use_hq_stage_a,
+		save_images
 ):
 	global gui_default_settings
 	global ws
@@ -330,14 +403,10 @@ def process_basic_txt2img(
 		workflow["90"]["inputs"]["batch_index"] = 0
 		workflow["90"]["inputs"]["length"]      = batch
 
-	# Bugfix for the Stage A model being missing depending on platform with a different separator:
 	if use_hq_stage_a:
 		workflow["47"]["inputs"]["vae_name"] = os.path.join("cascade", "stage_a_ft_hq.safetensors")
 	else:
 		workflow["47"]["inputs"]["vae_name"] = os.path.join("cascade", "stage_a.safetensors")
-
-	# This is for saving images so they retain their metadata
-	json_workflow = json.dumps(workflow).encode('utf-8')
 
 	if backend == "ComfyUI":
 		try:
@@ -348,30 +417,25 @@ def process_basic_txt2img(
 		timer_start = time.time()
 		gallery_images = gen_images_websocket(ws, workflow)
 		timer_finish = f"{time.time()-timer_start:.2f}"
-		gi_pos = pos.strip().replace('\\', '\\\\')
-		gi_neg = neg.strip().replace('\\', '\\\\')
-		gen_info  = f"Prompt: **{gi_pos}**\n"
-		gen_info += f"Negative Prompt: **{gi_neg}**\n"
-		gen_info += f"Resolution: **{width}x{height}**\n"
-		gen_info += f"Compression: **{compression}**\n"
-		gen_info += f"Batch Size: **{batch}**\n"
 		
-		gen_info += f"Base Steps: **{steps_c}**\n"
-		gen_info += f"Base Seed: **{workflow['3']['inputs']['seed']}**\n"
-		gen_info += f"Base CFG: **{cfg_c}**\n"
-		gen_info += f"Base Shift: **{shift}**\n"
-		gen_info += f"Base Model: **{stage_c}**\n"
-		gen_info += f"CLIP Model: **{clip_model}**\n"
+		# Save images to disk if enabled
+		local_paths = []
+		if save_images:
+			gen_emb = create_embed_text(
+				pos, neg, width, height, steps_c, workflow["3"]["inputs"]["seed"],
+				cfg_c, batch, compression, shift, steps_b, workflow["33"]["inputs"]["seed"], cfg_b, stage_b, stage_c, clip_model, use_hq_stage_a
+			)
+			for image in gallery_images:
+				file_path = get_image_save_path("txt2img")
+				save_image_with_meta(image[0], workflow, gen_emb, file_path)
+				local_paths.append(file_path)
 
-		gen_info += f"Refiner Steps: **{steps_b}**\n"
-		gen_info += f"Refiner Seed: **{workflow['33']['inputs']['seed']}**\n"
-		gen_info += f"Refiner CFG: **{cfg_b}**\n"
-		gen_info += f"Refiner Model: **{stage_b}**\n"
-		gen_info += f'Decoder: **{workflow["47"]["inputs"]["vae_name"]}**\n\n'
-
-		gen_info += f"Total Time: **{timer_finish}s**\n"
-		gen_info += f"Note: Gradio's image load and display routine is slow and can introduce it's own delay with regards to generated images."
-		return gallery_images, gen_info
+		gen_info = create_markdown_infotext(
+			pos, neg, width, height, steps_c, workflow["3"]["inputs"]["seed"],
+			cfg_c, batch, compression, shift, steps_b, workflow["33"]["inputs"]["seed"], cfg_b, stage_b, stage_c, clip_model, use_hq_stage_a
+		)
+		gen_info += f"\nTotal Time: **{timer_finish}s**"
+		return gallery_images if not save_images else local_paths, gen_info
 	else:
 		raise gr.Error("CAP Feature Unavailable.")
 
@@ -381,7 +445,7 @@ def process_basic_img2img(
 		batch, compression, shift, latent_id, 
 		seed_b, cfg_b, steps_b, 
 		stage_b, stage_c, clip_model, backend,
-		denoise
+		denoise, use_hq_stage_a, save_images
 ):
 	workflow = json.loads(workflows.get_basic_img2img())
 
@@ -390,8 +454,8 @@ def process_basic_img2img(
 
 	# Stage C settings:
 	# Prompts:
-	workflow["68"]["inputs"]["text"] = pos
-	workflow["7"]["inputs"]["text"] = neg
+	workflow["101"]["inputs"]["text"] = pos
+	workflow["106"]["inputs"]["text"] = neg
 
 	# KSampler:
 	workflow["3"]["inputs"]["steps"] = steps_c
@@ -426,52 +490,68 @@ def process_basic_img2img(
 	workflow["77"]["inputs"]["unet_name"] = stage_b
 
 	# KSampler:
-	workflow["33"]["inputs"]["seed"]    = seed_b if seed_b > -1 else random.randint(0, 2147483647)
-	workflow["33"]["inputs"]["steps"]   = steps_b
-	workflow["33"]["inputs"]["cfg"]     = cfg_b
+	workflow["33"]["inputs"]["seed"]  = seed_b if seed_b > -1 else random.randint(0, 2147483647)
+	workflow["33"]["inputs"]["steps"] = steps_b
+	workflow["33"]["inputs"]["cfg"]   = cfg_b
 
 	# Handle Encoder/Decoder models
 	workflow["94"]["inputs"]["vae_name"] = os.path.join("cascade", "effnet_encoder.safetensors")
-	workflow["47"]["inputs"]["vae_name"] = os.path.join("cascade", "stage_a.safetensors")
+	if use_hq_stage_a:
+		workflow["47"]["inputs"]["vae_name"] = os.path.join("cascade", "stage_a_ft_hq.safetensors")
+	else:
+		workflow["47"]["inputs"]["vae_name"] = os.path.join("cascade", "stage_a.safetensors")
 
-	# This is for saving images so they retain their metadata
-	json_workflow = json.dumps(workflow).encode('utf-8')
+	# Handle Batch size
+	workflow["96"]["inputs"]["amount"] = batch + 1
+	workflow["97"]["inputs"]["amount"] = batch + 1
+
+	# Handle getting images from a batch:
+	if batch > 1 and latent_id > 0:
+		# Ensure that the batch index is zero indexed
+		workflow["90"]["inputs"]["batch_index"] = latent_id - 1
+		workflow["90"]["inputs"]["length"] = 1
+		workflow["99"]["inputs"]["batch_index"] = latent_id - 1
+		workflow["99"]["inputs"]["length"] = 1
+	else:
+		workflow["90"]["inputs"]["batch_index"] = 0
+		workflow["90"]["inputs"]["length"]      = batch
+		workflow["99"]["inputs"]["batch_index"] = 0
+		workflow["99"]["inputs"]["length"]      = batch
 
 	if backend == "ComfyUI":
 		try:
 			ws.ping()
 		except:
 			raise gr.Error("Connection to ComfyUI's API websocket lost. Try restarting the ComfyUI websocket.")
-		
+
 		timer_start = time.time()
 		gallery_images = gen_images_websocket(ws, workflow)
 		timer_finish = f"{time.time()-timer_start:.2f}"
 
+		local_paths = []
+		if save_images:
+			gen_emb = create_embed_text(
+				pos, neg, width, height, steps_c, workflow["3"]["inputs"]["seed"],
+				cfg_c, batch, compression, shift, steps_b, workflow["33"]["inputs"]["seed"], cfg_b, stage_b, stage_c, clip_model, use_hq_stage_a
+			)
+			# Zero out the base64 encoded image for space saving reasons
+			workflow["100"]["inputs"]["base64_image"] = ""
+			for image in gallery_images:
+				file_path = get_image_save_path("img2img")
+				save_image_with_meta(image[0], workflow, gen_emb, file_path)
+				local_paths.append(file_path)
+
 		if copy_orig:
-			gallery_images.append(input_image)
+			if not save_images:
+				gallery_images.append(input_image)
+			else:
+				local_paths.append(input_image)
 
-		gi_pos = pos.strip().replace('\\', '\\\\')
-		gi_neg = neg.strip().replace('\\', '\\\\')
-		gen_info = f'''
-Prompt: **{gi_pos}**
-Negative Prompt: **{gi_neg}**
-Resolution: **{width}x{height}**
-Denoise: **{denoise}**
-Resize Mode: **{crop_type}**
-Compression: **{compression}**
-Batch Size: **{batch}**
-Base Steps: **{steps_c}**
-Base Seed: **{workflow["3"]["inputs"]["seed"]}**
-Base CFG: **{cfg_c}**
-Base Shift: **{shift}**
-Base Model: **{stage_c}**
-CLIP Model: **{clip_model}**
-Refiner Steps: **{steps_b}**
-Refiner Seed: **{workflow["33"]["inputs"]["seed"]}**
-Refiner CFG: **{cfg_b}**
-Refiner Model: **{stage_b}**
+		gen_info = create_markdown_infotext(
+			pos, neg, width, height, steps_c, workflow["3"]["inputs"]["seed"],
+			cfg_c, batch, compression, shift, steps_b, workflow["33"]["inputs"]["seed"],
+			cfg_b, stage_b, stage_c, clip_model, use_hq_stage_a
+		)
+		gen_info += f"\nTotal Time: **{timer_finish}s**"
 
-Total Time: **{timer_finish}s**
-Note: Gradio's image load and display routine is slow and can introduce it's own delay with regards to generated images.
-'''
 		return gallery_images, gen_info

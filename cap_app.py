@@ -120,4 +120,6 @@ def new_resp(*args, **kwargs):
 	return new_response
 
 gr.routes.templates.TemplateResponse = new_resp
-app.launch(server_port=6969, server_name="0.0.0.0", allowed_paths=[os.getcwd()])
+local_wd = os.getcwd()
+print(f"Current Working Dir: {local_wd}")
+app.launch(server_port=6969, server_name="0.0.0.0", allowed_paths=[local_wd])
