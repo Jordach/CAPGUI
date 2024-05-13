@@ -33,7 +33,7 @@ def img2img_tab(global_ctx, local_ctx):
 					)
 				with gr.Row():
 					local_ctx["copy_to_gallery"] = gr.Checkbox(cap_util.gui_default_settings["ui_img2img_include_original"], label="Show Input Image in Gallery?")
-					local_ctx["create_blank_canvas"] = gr.Button("Create Blank Canvas", variant="primary")
+					local_ctx["create_blank_canvas"] = gr.Button("Delete and Create new Blank Canvas", variant="stop")
 				local_ctx["stage_c_denoise"] = gr.Slider(
 					minimum=0, maximum=1, value=0.75, step=0.01, label="Denoise Strength:"
 				)
