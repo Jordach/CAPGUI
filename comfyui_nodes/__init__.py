@@ -64,7 +64,7 @@ class B64Decoder:
 	def load_image(self, base64_image):
 		img_data = base64.b64decode(base64_image)
 		pil_img = Image.open(BytesIO(img_data))
-		return conv_pil_tensor(pil_img)
+		return conv_pil_tensor(pil_img.convert("RGB"))
 
 NODE_CLASS_MAPPINGS = {
 	"UNETLoaderCAPGUI": UNETLoaderCAP,

@@ -71,12 +71,17 @@ gui_default_settings = {
 
 	# UI and functionality:
 	"ui_anonymous_mode": False,
-	"ui_img2img_include_original": True,
+	"ui_img2img_include_original": False,
 }
 
 img2img_crop_types = [
 	"Resize Only",
 	"Crop to Latent Size",
+]
+
+inpaint_mask_types = [
+	"Auto1111",
+	"ComfyUI"
 ]
 
 # Imports for functions and actions
@@ -253,14 +258,15 @@ def scan_for_comfy_models():
 
 def image_to_b64(image):
 	bytes_buffer = io.BytesIO()
-	image.save(bytes_buffer, format="png")
-	return base64.b64encode(bytes_buffer.getvalue()).decode()
+	image.save(bytes_buffer, format="png", compression=4)
+	return base64.b64encode(bytes_buffer.getvalue()).decode("utf-8")
 
 def create_markdown_infotext(
 	pos, neg, width, height, 
 	c_steps, c_seed, c_cfg, batch, 
 	compression, shift, b_steps, b_seed,
-	b_cfg, stage_b, stage_c, clip, use_hq
+	b_cfg, stage_b, stage_c, clip, use_hq,
+	origin_tab
 ):
 	gi_pos = pos.strip().replace('\\', '\\\\')
 	gi_neg = neg.strip().replace('\\', '\\\\')
@@ -282,6 +288,8 @@ Refiner Seed: **{b_seed}**
 Refiner CFG: **{b_cfg}**
 Refiner Model: **{stage_b}**
 High Quality Decoder: **{'True' if use_hq else 'False'}**
+
+Generation Type: **{origin_tab}**
 """
 	return infotext
 
@@ -290,7 +298,8 @@ def create_embed_text(
 	pos, neg, width, height, 
 	c_steps, c_seed, c_cfg, batch, 
 	compression, shift, b_steps, b_seed,
-	b_cfg, stage_b, stage_c, clip, use_hq
+	b_cfg, stage_b, stage_c, clip, use_hq,
+	origin_tab
 ):
 	gi_pos = pos.strip()
 	gi_neg = neg.strip()
@@ -310,6 +319,7 @@ Refiner Seed: {b_seed}
 Refiner CFG: {b_cfg}
 Refiner Model: {stage_b}
 High Quality Decoder: {'True' if use_hq else 'False'}
+Origin Tab: {origin_tab}
 """
 	return embedtext
 
@@ -423,7 +433,8 @@ def process_basic_txt2img(
 		if save_images:
 			gen_emb = create_embed_text(
 				pos, neg, width, height, steps_c, workflow["3"]["inputs"]["seed"],
-				cfg_c, batch, compression, shift, steps_b, workflow["33"]["inputs"]["seed"], cfg_b, stage_b, stage_c, clip_model, use_hq_stage_a
+				cfg_c, batch, compression, shift, steps_b, workflow["33"]["inputs"]["seed"],
+				cfg_b, stage_b, stage_c, clip_model, use_hq_stage_a, "Text to Image"
 			)
 			for image in gallery_images:
 				file_path = get_image_save_path("txt2img")
@@ -432,7 +443,8 @@ def process_basic_txt2img(
 
 		gen_info = create_markdown_infotext(
 			pos, neg, width, height, steps_c, workflow["3"]["inputs"]["seed"],
-			cfg_c, batch, compression, shift, steps_b, workflow["33"]["inputs"]["seed"], cfg_b, stage_b, stage_c, clip_model, use_hq_stage_a
+			cfg_c, batch, compression, shift, steps_b, workflow["33"]["inputs"]["seed"],
+			cfg_b, stage_b, stage_c, clip_model, use_hq_stage_a, "Text to Image"
 		)
 		gen_info += f"\nTotal Time: **{timer_finish}s**"
 		return gallery_images if not save_images else local_paths, gen_info
@@ -449,9 +461,6 @@ def process_basic_img2img(
 ):
 	workflow = json.loads(workflows.get_basic_img2img())
 
-	# Temporary override until a 64x compression switch is implemented:
-	compression = 32
-
 	# Stage C settings:
 	# Prompts:
 	workflow["101"]["inputs"]["text"] = pos
@@ -463,6 +472,7 @@ def process_basic_img2img(
 	workflow["3"]["inputs"]["cfg"]   = cfg_c
 	workflow["3"]["inputs"]["denoise"] = denoise
 
+	workflow["95"]["inputs"]["compression"] = compression
 	# Handle Image Processing chain:
 	output_width = 0
 	output_height = 0
@@ -476,9 +486,13 @@ def process_basic_img2img(
 	elif crop_type == img2img_crop_types[1]:
 		output_width = (width // compression) * compression
 		output_height = (height // compression) * compression
-
 		resized_image = input_image.resize((output_width, output_height), Image.Resampling.LANCZOS)
-		workflow["100"]["inputs"]["base64_image"] = image_to_b64(resized_image).encode()
+		workflow["100"]["inputs"]["base64_image"] = image_to_b64(resized_image)
+	else:
+		output_width = (width // compression) * compression
+		output_height = (height // compression) * compression
+		resized_image = input_image.resize((output_width, output_height), Image.Resampling.LANCZOS)
+		workflow["100"]["inputs"]["base64_image"] = image_to_b64(resized_image)
 
 	# CLIP and Stage C UNET:
 	workflow["74"]["inputs"]["unet_name"] = stage_c
@@ -532,12 +546,145 @@ def process_basic_img2img(
 		if save_images:
 			gen_emb = create_embed_text(
 				pos, neg, width, height, steps_c, workflow["3"]["inputs"]["seed"],
-				cfg_c, batch, compression, shift, steps_b, workflow["33"]["inputs"]["seed"], cfg_b, stage_b, stage_c, clip_model, use_hq_stage_a
+				cfg_c, batch, compression, shift, steps_b, workflow["33"]["inputs"]["seed"], 
+				cfg_b, stage_b, stage_c, clip_model, use_hq_stage_a, "Image to Image"
 			)
 			# Zero out the base64 encoded image for space saving reasons
 			workflow["100"]["inputs"]["base64_image"] = ""
+			total_images = batch
+			if copy_orig:
+				total_images += 1
 			for image in gallery_images:
 				file_path = get_image_save_path("img2img")
+				save_image_with_meta(image[0], workflow, gen_emb, file_path)
+				local_paths.append(file_path)
+
+		gen_info = create_markdown_infotext(
+			pos, neg, width, height, steps_c, workflow["3"]["inputs"]["seed"],
+			cfg_c, batch, compression, shift, steps_b, workflow["33"]["inputs"]["seed"],
+			cfg_b, stage_b, stage_c, clip_model, use_hq_stage_a, "Image to Image"
+		)
+
+		gen_info += f"\nTotal Time: **{timer_finish}s**"
+
+		return gallery_images if not save_images else local_paths, gen_info
+
+def process_basic_inpaint(
+		input_image, mask_image, copy_orig, crop_type, 
+		pos, neg, steps_c, seed_c, width, 
+		height, cfg_c, batch, compression, 
+		shift, latent_id, seed_b, cfg_b, steps_b, 
+		stage_b, stage_c, clip_model, backend,
+		denoise, use_hq_stage_a, save_images, save_mask
+):
+	workflow = json.loads(workflows.get_inpaint())
+
+	# Stage C settings:
+	# Prompts:
+	workflow["101"]["inputs"]["text"] = pos
+	workflow["106"]["inputs"]["text"] = neg
+
+	# KSampler:
+	workflow["3"]["inputs"]["steps"] = steps_c
+	workflow["3"]["inputs"]["seed"]  = seed_c if seed_c > -1 else random.randint(0, 2147483647)
+	workflow["3"]["inputs"]["cfg"]   = cfg_c
+	workflow["3"]["inputs"]["denoise"] = denoise
+
+	# Handle Image Processing chain:
+	output_width = 0
+	output_height = 0
+	# Handle resize only:
+	if crop_type == img2img_crop_types[0]:
+		output_width = (width // compression) * compression
+		output_height = (height // compression) * compression
+
+		resized_image = input_image.resize((output_width, output_height), Image.Resampling.LANCZOS)
+		resized_mask = mask_image.resize((output_width, output_height), Image.Resampling.LANCZOS)
+		workflow["129"]["inputs"]["base64_image"] = image_to_b64(resized_image)
+		workflow["130"]["inputs"]["base64_image"] = image_to_b64(resized_mask)
+	# Resize and Crop to latent pixels:
+	elif crop_type == img2img_crop_types[1]:
+		output_width = (width // compression) * compression
+		output_height = (height // compression) * compression
+		resized_image = input_image.resize((output_width, output_height), Image.Resampling.LANCZOS)
+		resized_mask = mask_image.resize((output_width, output_height), Image.Resampling.LANCZOS)
+		workflow["129"]["inputs"]["base64_image"] = image_to_b64(resized_image)
+		workflow["130"]["inputs"]["base64_image"] = image_to_b64(resized_mask)
+	# Bugfix for Gradio not initialising a dropdown
+	else:
+		output_width = (width // compression) * compression
+		output_height = (height // compression) * compression
+		resized_image = input_image.resize((output_width, output_height), Image.Resampling.LANCZOS)
+		resized_mask = mask_image.resize((output_width, output_height), Image.Resampling.LANCZOS)
+		workflow["129"]["inputs"]["base64_image"] = image_to_b64(resized_image)
+		workflow["130"]["inputs"]["base64_image"] = image_to_b64(resized_mask)
+
+	# CLIP and Stage C UNET:
+	workflow["74"]["inputs"]["unet_name"] = stage_c
+	workflow["75"]["inputs"]["clip_name"] = clip_model
+	workflow["73"]["inputs"]["shift"]     = shift
+
+	# Stage B settings:
+	# Stage B UNET
+	workflow["77"]["inputs"]["unet_name"] = stage_b
+
+	# KSampler:
+	workflow["33"]["inputs"]["seed"]  = seed_b if seed_b > -1 else random.randint(0, 2147483647)
+	workflow["33"]["inputs"]["steps"] = steps_b
+	workflow["33"]["inputs"]["cfg"]   = cfg_b
+
+	# Handle Encoder/Decoder models
+	workflow["94"]["inputs"]["vae_name"] = os.path.join("cascade", "effnet_encoder.safetensors")
+	if use_hq_stage_a:
+		workflow["47"]["inputs"]["vae_name"] = os.path.join("cascade", "stage_a_ft_hq.safetensors")
+	else:
+		workflow["47"]["inputs"]["vae_name"] = os.path.join("cascade", "stage_a.safetensors")
+
+	# Handle Batch size
+	workflow["96"]["inputs"]["amount"] = batch + 1
+	workflow["97"]["inputs"]["amount"] = batch + 1
+
+	# Handle getting images from a batch:
+	if batch > 1 and latent_id > 0:
+		# Ensure that the batch index is zero indexed
+		workflow["90"]["inputs"]["batch_index"] = latent_id - 1
+		workflow["90"]["inputs"]["length"] = 1
+		workflow["99"]["inputs"]["batch_index"] = latent_id - 1
+		workflow["99"]["inputs"]["length"] = 1
+	else:
+		workflow["90"]["inputs"]["batch_index"] = 0
+		workflow["90"]["inputs"]["length"]      = batch
+		workflow["99"]["inputs"]["batch_index"] = 0
+		workflow["99"]["inputs"]["length"]      = batch
+
+	if backend == "ComfyUI":
+		try:
+			ws.ping()
+		except:
+			raise gr.Error("Connection to ComfyUI's API websocket lost. Try restarting the ComfyUI websocket.")
+
+		timer_start = time.time()
+		gallery_images = gen_images_websocket(ws, workflow)
+		timer_finish = f"{time.time()-timer_start:.2f}"
+
+		local_paths = []
+
+		if save_images:
+			gen_emb = create_embed_text(
+				pos, neg, width, height, steps_c, workflow["3"]["inputs"]["seed"],
+				cfg_c, batch, compression, shift, steps_b, workflow["33"]["inputs"]["seed"],
+				cfg_b, stage_b, stage_c, clip_model, use_hq_stage_a, "Inpainting"
+			)
+			# Zero out the base64 encoded image for space saving reasons
+			workflow["129"]["inputs"]["base64_image"] = ""
+			workflow["130"]["inputs"]["base64_image"] = ""
+
+			total_images = batch
+			if copy_orig:
+				total_images += 2
+
+			for image in gallery_images:
+				file_path = get_image_save_path("inpainting")
 				save_image_with_meta(image[0], workflow, gen_emb, file_path)
 				local_paths.append(file_path)
 
@@ -546,12 +693,21 @@ def process_basic_img2img(
 				gallery_images.append(input_image)
 			else:
 				local_paths.append(input_image)
+		
+		if save_mask:
+			file_path = get_image_save_path("inpainting")
+			resized_mask.save(file_path, comopression=4)
+			if not save_images:
+				gallery_images.append(file_path)
+			else:
+				local_paths.append(file_path)
+
 
 		gen_info = create_markdown_infotext(
 			pos, neg, width, height, steps_c, workflow["3"]["inputs"]["seed"],
 			cfg_c, batch, compression, shift, steps_b, workflow["33"]["inputs"]["seed"],
-			cfg_b, stage_b, stage_c, clip_model, use_hq_stage_a
+			cfg_b, stage_b, stage_c, clip_model, use_hq_stage_a, "Inpainting"
 		)
 		gen_info += f"\nTotal Time: **{timer_finish}s**"
 
-		return gallery_images, gen_info
+		return gallery_images if not save_images else local_paths, gen_info

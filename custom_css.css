@@ -11,9 +11,17 @@ div.gradio-container {
     object-fit: scale-down !important;
 }
 
-@media screen and (min-width: 2500px) {
+@media screen {
     #txt2img_gallery, #img2img_gallery {
         min-height: 70vh !important;
+    }
+}
+
+@media screen {
+    #inpaint_canvas div[data-testid=image] div[class*="wrap"] div[class*="stage-wrap"] canvas, #img2img_canvas div[data-testid=image] div[class*="wrap"] div[class*="stage-wrap"] canvas {
+        max-width: 100% !important;
+        max-height: 97.5vh !important;
+        width: 100% !important;
     }
 }
 

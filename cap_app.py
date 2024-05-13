@@ -1,7 +1,7 @@
 import os
 import cap_util
 from cap_util import gui_generics
-from cap_gui import txt, img, donate
+from cap_gui import txt, img, inpainting, donate
 import websocket
 import uuid
 import gradio as gr
@@ -46,18 +46,10 @@ def register_tab(g_tabs, p_hooks, tab_name, friendly_name, tab_code_function, po
 	# Run this code later at the end of tab registering
 	p_hooks.append((post_tab_code_function, g_tabs, g_tabs[tab_name]))
 
-with gr.Blocks(title=f"{'[ANON MODE] ' if cap_util.gui_default_settings['ui_anonymous_mode'] else ''}CAP App", analytics_enabled=False, css="custom_css.css") as app:
+with gr.Blocks(title=f"{'[ANON MODE] ' if cap_util.gui_default_settings['ui_anonymous_mode'] else ''}CAP App", analytics_enabled=False, ) as app:
 	post_hooks = []
 	global_tabs = {}
 	topbar.create_topbar(global_tabs, stage_c_models, stage_c_default, stage_b_models, stage_b_default, clip_models, clip_default)
-
-	# with gr.Tab("Image to Image", elem_id="tab_img2img"):
-	# 	gr.Markdown("Soon")
-	# 	# Internal self contained tab functions go here:
-	
-	# with gr.Tab("Inpainting", elem_id="tab_inpainting"):
-	# 	gr.Markdown("Soon")
-	# 	# Internal self contained tab functions go here:
 
 	# if not cap_util.gui_default_settings["ui_anonymous_mode"]:
 	# 	with gr.Tab("Gallery", elem_id="tab_gallery"):
@@ -88,6 +80,7 @@ with gr.Blocks(title=f"{'[ANON MODE] ' if cap_util.gui_default_settings['ui_anon
 	# Register tabs here
 	register_tab(global_tabs, post_hooks, "txt2img", "Text to Image", txt.txt2img_tab, txt.txt2img_tab_post_hook, True, True)
 	register_tab(global_tabs, post_hooks, "img2img", "Image to Image", img.img2img_tab, img.img2img_tab_post_hook, True, True)
+	register_tab(global_tabs, post_hooks, "inpaint", "Inpainting", inpainting.inpaint_tab, inpainting.inpaint_tab_post_hook, True, True)
 	register_tab(global_tabs, post_hooks, "donate", "Donate", donate.donate_tab, gui_generics.dummy_post_hook, False, True)
 
 	# Gradio element Functions that work on the current and or other tabs go here:
@@ -111,7 +104,9 @@ with gr.Blocks(title=f"{'[ANON MODE] ' if cap_util.gui_default_settings['ui_anon
 if not hasattr(cap_util, "gradio_response_header"):
 	cap_util.gradio_response_header = gr.routes.templates.TemplateResponse
 
-appended_script = f'<script type="text/javascript" src="file=custom_js.js?{os.path.getmtime("custom_js.js")}"></script>\n'
+appended_script = f'''<script type="text/javascript" src="file=custom_js.js?{os.path.getmtime("custom_js.js")}"></script>
+<link rel="stylesheet" href="file=custom_css.css?{os.path.getmtime("custom_css.css")}">
+'''
 
 def new_resp(*args, **kwargs):
 	new_response = cap_util.gradio_response_header(*args, **kwargs)
