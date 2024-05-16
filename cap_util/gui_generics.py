@@ -24,10 +24,10 @@ def send_to_targets(global_ctx):
 # these usually do not come with functions
 
 def get_pos_prompt_box():
-	return gr.Textbox(label=None, show_label=False, placeholder="Enter a prompt here.", lines=3)
+	return gr.Textbox(label=None, show_label=False, placeholder="Enter a prompt here.", lines=3, elem_id="pos_prompt", elem_classes=["prompt"])
 
 def get_neg_prompt_box():
-	return gr.Textbox(label=None, show_label=False, placeholder="Enter a negative prompt here.", lines=3)
+	return gr.Textbox(label=None, show_label=False, placeholder="Enter a negative prompt here.", lines=3, elem_id="neg_prompt", elem_classes=["prompt"])
 
 def get_generate_button(local_ctx):
 	return gr.Button("Generate!", variant="primary", elem_id=f"generate_{local_ctx['__tab_name__']}")
