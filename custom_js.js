@@ -31,6 +31,17 @@ document.addEventListener('keydown', function(e) {
 	}
 })
 
+// Hacky generate forever function
+function gen_forever() {
+	const generateButton = get_tab_window().querySelector('#promptbar > #buttons > button[id^=generate_]');
+	var generateForever = get_tab_window().querySelector('#promptbar > #buttons > div [id^=gen_forever_] > label > input[type="checkbox"]');
+	// console.log(generateForever.checked)
+	if (generateForever.checked) {
+		generateButton.click();
+	}
+}
+setInterval(gen_forever, 2000);
+
 // Simulate an `input` DOM event for Gradio Textbox component. Needed after you edit its contents in javascript, otherwise your edits
 // will only visible on web page and not sent to python.
 function updateInput(target) {

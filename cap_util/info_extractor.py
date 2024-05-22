@@ -1,5 +1,6 @@
 import json
 import gzip
+import cap_util
 from xml.dom import minidom
 
 # borrowed from https://github.com/receyuki/stable-diffusion-prompt-reader/blob/master/sd_prompt_reader/image_data_reader.py
@@ -253,3 +254,37 @@ def get_image_info(i):
 			prompt, negative = handle_drawthings(i.info)
 
 	return prompt, negative
+
+import gradio as gr
+def read_infodict_from_image(image):
+	# Try reading parameters first from other GUIs:
+	prompt, negative = get_image_info(image)
+	width, height = image.size
+
+	if prompt != "" or negative != "":
+		infotext, infodict = cap_util.create_infotext_objects(prompt, negative, width, height, markdown=True)
+		return infotext, infodict
+	# Try reading stealth PNG:
+	else:
+		alpha_data = read_info_from_image_alpha(image)
+		# Try loading the string as JSON data - on exception load Auto1111 style meta
+		try:
+			infodict = json.loads(alpha_data)
+			infotext = cap_util.create_infotext_from_dict(infodict, markdown=True)
+			return infotext, infodict
+		except:
+			try:
+				prompt, negative = handle_auto1111(alpha_data)
+				if prompt != "" or negative != "":
+					infotext, infodict = cap_util.create_infotext_objects(prompt, negative, width, height, markdown=True)
+					return infotext, infodict
+				# Handle older CAPGUI stealth PNG data
+				else:
+					infotext = alpha_data
+					infodict = {}
+					return infotext, infodict
+			# Handle older CAPGUI stealth PNG data
+			except:
+				infotext = alpha_data
+				infodict = {}
+				return infotext, infodict

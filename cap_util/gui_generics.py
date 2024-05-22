@@ -1,6 +1,7 @@
 # This file is used for importing the generic GUI pieces such as the Generate button
 import cap_util
 import gradio as gr
+import copy
 
 # Functions
 def dummy_post_hook(global_ctx, local_ctx):
@@ -9,14 +10,18 @@ def dummy_post_hook(global_ctx, local_ctx):
 def set_rand_seed():
 	return -1
 
-def send_to_targets(global_ctx):
+def send_to_targets(global_ctx, current_tab):
 	# Get a list of tabs used for generation
-	targets = []
 	known_tabs = global_ctx.keys()
+	targets = []
 	for tab in known_tabs:
+		# Don't send to the same tab
+		if current_tab == tab:
+			continue
+
 		if "__send_to__" in global_ctx[tab]:
 			if global_ctx[tab]["__send_to__"]:
-				targets.append(global_ctx[tab]["__friendly_name__"])
+				targets.append(global_ctx[tab]["__name_pair__"])
 	
 	return targets
 
@@ -35,13 +40,16 @@ def get_generate_button(local_ctx):
 def get_load_last_button():
 	return gr.Button("Load Last Generation", elem_id="reload_txt2img")
 
+def get_gen_forever_checkbox(local_ctx):
+	return gr.Checkbox(False, label="Generate Forever?", elem_id=f"gen_forever_{local_ctx['__tab_name__']}")
+
 def get_send_to_button():
 	return gr.Button("Send to Selected Tab.", elem_id="send2tab")
 
 def get_send_to_dropdown(global_ctx):
-	return gr.Dropdown(send_to_targets(global_ctx), filterable=False, label="Send To Tab:")
+	return gr.Dropdown(["not initialised"], multiselect=False, interactive=True, label="Send To Tab:")
 
-def get_prompt_row(global_ctx, local_ctx, prompt_scale):
+def get_prompt_row(global_ctx, local_ctx, prompt_scale, extra_buttons_fn=dummy_post_hook):
 	with gr.Row(elem_id="promptbar"):
 		with gr.Column(scale=prompt_scale):
 			local_ctx["pos_prompt"] = get_pos_prompt_box()
@@ -49,7 +57,8 @@ def get_prompt_row(global_ctx, local_ctx, prompt_scale):
 		with gr.Column(elem_id="buttons"):
 			local_ctx["generate"] = get_generate_button(local_ctx)
 			local_ctx["load_last"] = get_load_last_button()
-	pass
+			local_ctx["gen_forever"] = get_gen_forever_checkbox(local_ctx)
+			extra_buttons_fn(global_ctx, local_ctx)
 
 def get_generation_settings_column(global_ctx, local_ctx):
 	with gr.Accordion(label="Base Settings:", open=False, elem_id="base_settings"):
@@ -63,11 +72,11 @@ def get_generation_settings_column(global_ctx, local_ctx):
 					scale=10, label="Base Steps:", interactive=True,
 				)
 
-				local_ctx["stage_c_seed"] = gr.Number(value=-1, minimum=-1, maximum=2147483647, precision=0, label="Base Seed:", scale=2, interactive=True,)
+				local_ctx["stage_c_seed"] = gr.Number(value=-1, minimum=-1, maximum=2147483647, precision=0, label="Base Seed:", scale=2, interactive=True)
 				with gr.Row():
 					local_ctx["stage_c_seed_rand"] = gr.Button("🎲", size="sm", scale=1, variant="secondary")
 					local_ctx["stage_c_swap_ratio"] = gr.Button("🔀", size="sm", scale=1, variant="secondary")
-				local_ctx["stage_c_seed_rand"].click(set_rand_seed, inputs=[], outputs=[local_ctx["stage_c_seed"]], show_progress=False, queue=True,)
+				local_ctx["stage_c_seed_rand"].click(set_rand_seed, inputs=[], outputs=[local_ctx["stage_c_seed"]], show_progress=False, queue=False)
 		
 		with gr.Row():
 			with gr.Column(scale=2):
@@ -97,7 +106,12 @@ def get_generation_settings_column(global_ctx, local_ctx):
 				)
 
 			with gr.Column(scale=4):
-				local_ctx["aspect_info"] = gr.Textbox("1:1", label="Aspect Ratio:", lines=1, max_lines=1, interactive=False)
+				with gr.Row():
+					local_ctx["aspect_info"] = gr.Textbox("1:1", label="Aspect Ratio:", lines=1, max_lines=1, interactive=False)
+					local_ctx["latent_res"] = gr.Textbox(
+						f"{cap_util.gui_default_settings['gen_size']//cap_util.gui_default_settings['gen_compression']}x{cap_util.gui_default_settings['gen_size']//cap_util.gui_default_settings['gen_compression']}",
+						label="Latent Resolution:", lines=1, max_lines=1, interactive=False
+					)
 
 				local_ctx["stage_c_width"] = gr.Slider(
 					minimum=cap_util.gui_default_settings["gen_size_min"],
@@ -134,23 +148,48 @@ def get_generation_settings_column(global_ctx, local_ctx):
 				)
 				local_ctx["stage_c_auto_compressor"] = gr.Checkbox(value=True, label="Automatic Compression Finder", scale=1, interactive=True)
 						
-				def calc_compression_factor(width, height, apply_change):
+				def calc_compression_factor(width, height, apply_change, compression):
 					aspect_text = cap_util.calc_aspect_string(width, height)
 					if apply_change:
-						return cap_util.calc_compression_factor(width, height), aspect_text
+						comp = cap_util.calc_compression_factor(width, height)
+						lw, lh = 0, 0
+						if comp is not None:
+							lw, lh = width//comp, height//comp
+						else:
+							lw, lh = width//compression, height//compression
+						
+						latent_text = f"{lw}x{lh}"
+						add_warning = False
+						if lw < 16 or lw > 64:
+							add_warning = True
+						if lh < 16 or lh > 64:
+							add_warning = True
+
+						if add_warning:
+							latent_text += " ⚠️"
+						return comp if comp is not None else gr.Slider(), aspect_text, latent_text
 					else:
-						return gr.Slider(), aspect_text
-				
+						lw, lh = width//compression, height//compression
+						latent_text = f"{lw}x{lh}"
+						add_warning = False
+						if lw < 16 or lw > 64:
+							add_warning = True
+						if lh < 16 or lh > 64:
+							add_warning = True
+							
+						if add_warning:
+							latent_text += " ⚠️"
+						return gr.Slider(), aspect_text, latent_text
 				local_ctx["stage_c_width"].change(
 					calc_compression_factor,
-					inputs=[local_ctx["stage_c_width"], local_ctx["stage_c_height"], local_ctx["stage_c_auto_compressor"]],
-					outputs = [local_ctx["stage_c_compression"], local_ctx["aspect_info"]], show_progress=False, queue=False
+					inputs=[local_ctx["stage_c_width"], local_ctx["stage_c_height"], local_ctx["stage_c_auto_compressor"], local_ctx["stage_c_compression"]],
+					outputs = [local_ctx["stage_c_compression"], local_ctx["aspect_info"], local_ctx["latent_res"]], show_progress=False, queue=False
 				)
 
 				local_ctx["stage_c_height"].change(
 					calc_compression_factor,
-					inputs=[local_ctx["stage_c_width"], local_ctx["stage_c_height"], local_ctx["stage_c_auto_compressor"]],
-					outputs = [local_ctx["stage_c_compression"], local_ctx["aspect_info"]], show_progress=False, queue=False
+					inputs=[local_ctx["stage_c_width"], local_ctx["stage_c_height"], local_ctx["stage_c_auto_compressor"], local_ctx["stage_c_compression"]],
+					outputs = [local_ctx["stage_c_compression"], local_ctx["aspect_info"], local_ctx["latent_res"]], show_progress=False, queue=False
 				)
 		
 	with gr.Accordion(label="Refiner Settings:", open=False, elem_id="refiner_settings"):
@@ -183,13 +222,23 @@ def get_generation_settings_column(global_ctx, local_ctx):
 		show_progress=False, queue=False
 	)
 
-def get_gallery_column(global_ctx, local_ctx, gallery_height="70vh"):
+def get_gallery_column(global_ctx, local_ctx, gallery_height="70vh", add_send_to_text=False):
 	local_ctx["gallery"] = gr.Gallery(
 		allow_preview=True, preview=True, show_download_button=True, object_fit="contain", 
 		show_label=False, label=None, elem_id=f"{local_ctx['__tab_name__']}_gallery", height=gallery_height,
+		interactive=False,
 	)
 	with gr.Accordion(label="Generation Info:", open=True):
 		local_ctx["gen_info_box"] = gr.Markdown("", line_breaks=True)
 		with gr.Column():
+			local_ctx["send_to_which_image"] = gr.Slider(
+				minimum=1, maximum=cap_util.gui_default_settings["gen_batch_size_max"], value=1, step=1, 
+				label="Which Image to Send?", info="1 sends the first image, 2 sends the second image, and so on."
+			)
 			local_ctx["send_to_dropdown"] = get_send_to_dropdown(global_ctx)
 			local_ctx["send_to_button"] = get_send_to_button()
+	
+			# Whether a tab can receive infotext to update prompts, generation parameters and images
+			if add_send_to_text:
+				local_ctx["send_to_target"] = gr.Textbox("INIT", visible=False)
+				local_ctx["gen_json"] = gr.Markdown("INIT", visible=False)

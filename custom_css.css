@@ -4,7 +4,7 @@ div.gradio-container {
 }
 
 .block.gradio-gallery{
-	background: var(--input-background-fill);
+    background: var(--input-background-fill);
 }
 
 .gradio-gallery .thumbnails img {
@@ -12,12 +12,18 @@ div.gradio-container {
 }
 
 @media screen {
-    #txt2img_gallery, #img2img_gallery {
+    #txt2img_gallery, #img2img_gallery, #inpaint_gallery {
         min-height: 70vh !important;
     }
-}
-
-@media screen {
+    #tools_image {
+        height: auto !important;
+        object-fit: scale-down !important;
+    }
+    #tools_image > button > div > img {
+        max-height: 75vh !important;
+        width: 100% !important;
+        object-fit: scale-down !important;
+    }
     #inpaint_canvas div[data-testid=image] div[class*="wrap"] div[class*="stage-wrap"] canvas, #img2img_canvas div[data-testid=image] div[class*="wrap"] div[class*="stage-wrap"] canvas {
         max-width: 100% !important;
         max-height: 97.5vh !important;
@@ -26,6 +32,6 @@ div.gradio-container {
 }
 
 #prose {
-	width: 100vw !important;
-	height: 100vh !important;
+    width: 100vw !important;
+    height: 100vh !important;
 }

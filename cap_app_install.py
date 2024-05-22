@@ -117,7 +117,11 @@ elif args.gradio:
 			# Now allow the user to download models into their ComfyUI install.
 			return "ComfyUI install is usable, and valid as a backend!", gr.Accordion(visible=True)
 
-		validate_comfy_config.click(validate_comfyui_settings, inputs=[gui_comfy_path, gui_comfy_address, gui_comfy_port], outputs=[validate_status, download_models_accord])
+		validate_comfy_config.click(
+			validate_comfyui_settings, 
+			inputs=[gui_comfy_path, gui_comfy_address, gui_comfy_port], 
+			outputs=[validate_status, download_models_accord]
+		)
 
 		def download_comfyui_models(c1b, c3b, res1b, res3b, reflite, refxl, cnet, encoders, respro):
 			choices = {

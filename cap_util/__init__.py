@@ -1,6 +1,18 @@
 # These settings are loaded at launch and overridden by the config.yaml
 ws = ""
 
+# Format for intermediary memory:
+"""
+{
+	"params": infodict,
+	"image": Gradio Image Editor Dict
+}
+"""
+# Memory for send_to
+send_to = {}
+# Memory for load_last_generation
+last_generation = {}
+
 gui_default_settings = {
 	# Path settings for ComfyUI
 	"comfy_address": "127.0.0.1",
@@ -150,22 +162,19 @@ def clamp(val, min, max):
 	else:
 		return val
 
-def get_image_save_path(subfolder):
+def get_image_save_path(subfolder, name="image"):
 	current_date = time.strftime("%Y-%m-%d")
 	path = os.path.join("generations", subfolder, current_date)
 	os.makedirs(path, exist_ok=True)
 	counter = 0
 	while True:
-		filename = f"image_{counter:05}.png"
+		filename = f"{name}_{counter:05}.png"
 		full_path = os.path.join(path, filename)
 		if os.path.exists(full_path):
 			counter += 1
 			continue
 		else:
 			return full_path
-
-def compression_curve(x):
-	return math.pow(x, 0.9)
 
 # Handle Gradio based GUI interactions:
 def dummy_gradio_function():
@@ -179,35 +188,26 @@ def get_websocket_address():
 	return f"ws://{gui_default_settings['comfy_address']}:{gui_default_settings['comfy_port']}/ws?clientId={gui_default_settings['comfy_uuid']}"
 
 def calc_compression_factor(width, height):
-	min_len = min(width, height)
-	max_len = max(width, height)
-	# Clamp ratio to a specific length
-	ratio = max_len/min_len
-	ratio = clamp(ratio, 1, 2.25)
-	# Remap the aspect ratio from linear to an eased curve
-	r_factor = compression_curve(
-		remap(ratio, 1, 2.25, 0, 1)
-	)
-	# Figure out if the max latent length is clamped at 32 to 60
-	max_fac_len = int(clamp(
-		remap(r_factor, 0, 1, 48, 60),
-		32, 60
-	))
-
-	final_compression_factor = 0
-	found_factor = False
+	# Don't update the element when it can't find a value
+	final_compression_factor = None
 	# Start from the highest compression factor as lower factors have better quality
 	for compression in range(80, 31, -1):
-		# Find our current latent edge
-		latent_size = (max_len) // compression
-		if latent_size <= max_fac_len:
-			final_compression_factor = compression
-			found_factor = True
+		res_se = min(width, height)
+		res_le = max(width, height)
+		aspect = res_le / res_se
 		
-		# Fixes extreme aspect ratios snapping to 32
-		if not found_factor:
-			final_compression_factor = 80
-	return clamp(final_compression_factor, 32, 80)
+		latent_min = res_se // compression
+		latent_max = res_le // compression
+		latent_div = (latent_max + latent_min) / 2
+		
+		new_center = remap(aspect, 1, 3.75, 32, 40)
+		new_center = clamp(new_center, 31.5, 40)
+		
+		if latent_div >= new_center-1 and latent_div <= new_center:
+			final_compression_factor = compression
+			break
+
+	return final_compression_factor
 
 def calc_aspect_string(x, y):
 	x1 = int(x)
@@ -261,67 +261,111 @@ def image_to_b64(image):
 	image.save(bytes_buffer, format="png", compression=4)
 	return base64.b64encode(bytes_buffer.getvalue()).decode("utf-8")
 
-def create_markdown_infotext(
-	pos, neg, width, height, 
-	c_steps, c_seed, c_cfg, batch, 
-	compression, shift, b_steps, b_seed,
-	b_cfg, stage_b, stage_c, clip, use_hq,
-	origin_tab
-):
-	gi_pos = pos.strip().replace('\\', '\\\\')
-	gi_neg = neg.strip().replace('\\', '\\\\')
-	infotext = f"""Prompt: **{gi_pos}**
-Negative Prompt: **{gi_neg}**
-Resolution: **{width}x{height}**
-Compression: **{compression}**
-Batch Size: **{batch}**
+def create_infotext_from_dict(info_dict, markdown=False):
+	infotext = ""
+	if "prompt" in info_dict:
+		gi_pos = info_dict["prompt"].strip().replace("\\", "\\\\") if markdown else info_dict["prompt"].strip()
+		infotext += f"Prompt: {gi_pos}\n"
+	if "negative" in  info_dict:
+		gi_neg = info_dict["negative"].strip().replace("\\", "\\\\") if markdown else info_dict["negative"].strip()
+		infotext += f"Negative Prompt: {gi_neg}\n"
+	if "width" in info_dict and "height" in info_dict:
+		infotext += f"Resolution: {info_dict['width']}x{info_dict['height']}\n"
+	if "compression" in info_dict:
+		infotext += f"Compression: {info_dict['compression']}\n"
+	if "batch" in info_dict:
+		infotext += f"Batch Size: {info_dict['batch']}\n"
 
-Base Steps: **{c_steps}**
-Base Seed: **{c_seed}**
-Base CFG: **{c_cfg}**
-Base Shift: **{shift}**
-Base Model: **{stage_c}**
-CLIP Model: **{clip}**
+	if "c_steps" in info_dict:
+		infotext += f"Base Steps: {info_dict['c_steps']}\n"
+	if "c_seed" in info_dict:
+		infotext += f"Base Seed: {info_dict['c_seed']}\n"
+	if "c_cfg" in info_dict:
+		infotext += f"Base CFG: {info_dict['c_cfg']}\n"
+	if "shift" in info_dict:
+		infotext += f"Base Shift: {info_dict['shift']}\n"
+	if "stage_c" in info_dict:
+		infotext += f"Base Model: {info_dict['stage_c']}\n"
+	if "clip" in info_dict:
+		infotext += f"CLIP Model: {info_dict['clip']}\n"
 
-Refiner Steps: **{b_steps}**
-Refiner Seed: **{b_seed}**
-Refiner CFG: **{b_cfg}**
-Refiner Model: **{stage_b}**
-High Quality Decoder: **{'True' if use_hq else 'False'}**
+	if "b_steps" in info_dict:
+		infotext += f"Refiner Steps: {info_dict['b_steps']}\n"
+	if "b_seed" in info_dict:
+		infotext += f"Refiner Seed: {info_dict['b_seed']}\n"
+	if "b_cfg" in info_dict:
+		infotext += f"Refiner CFG: {info_dict['b_cfg']}\n"
+	if "stage_b" in info_dict:
+		infotext += f"Refiner Model: {info_dict['stage_b']}\n"
+	if "use_hq" in info_dict:
+		infotext += f"High Quality Decoder: {'True' if info_dict['use_hq'] else 'False'}\n"
 
-Generation Type: **{origin_tab}**
-"""
 	return infotext
 
-# Easier to mechanically process down the line
-def create_embed_text(
-	pos, neg, width, height, 
-	c_steps, c_seed, c_cfg, batch, 
-	compression, shift, b_steps, b_seed,
-	b_cfg, stage_b, stage_c, clip, use_hq,
-	origin_tab
+def create_infotext_objects(
+	pos=None, neg=None, width=None, height=None, 
+	c_steps=None, c_seed=None, c_cfg=None, batch=None, 
+	compression=None, shift=None, b_steps=None, b_seed=None,
+	b_cfg=None, stage_b=None, stage_c=None, clip=None, use_hq=None,
+	origin_tab=None, markdown=False
 ):
-	gi_pos = pos.strip()
-	gi_neg = neg.strip()
-	embedtext = f"""Prompt: {gi_pos}
-Negative Prompt: {gi_neg}
-Resolution: {width}x{height}
-Compression: {compression}
-Batch Size: {batch}
-Base Steps: {c_steps}
-Base Seed: {c_seed}
-Base CFG: {c_cfg}
-Base Shift: {shift}
-Base Model: {stage_c}
-CLIP Model: {clip}
-Refiner Steps: {b_steps}
-Refiner Seed: {b_seed}
-Refiner CFG: {b_cfg}
-Refiner Model: {stage_b}
-High Quality Decoder: {'True' if use_hq else 'False'}
-Origin Tab: {origin_tab}
-"""
-	return embedtext
+	info_dict = {}
+	if pos is not None:
+		gi_pos = pos.strip().replace('\\', '\\\\') if markdown else pos.strip()
+		infotext = f"Prompt: {gi_pos}\n"
+		info_dict["prompt"] = pos.strip()
+	if neg is not None:
+		gi_neg = neg.strip().replace('\\', '\\\\') if markdown else neg.strip()
+		infotext += f"Negative Prompt: {gi_neg}\n"
+		info_dict["negative"] = neg.strip()
+	if width is not None and height is not None:
+		infotext += f"Resolution: {width}x{height}\n"
+		info_dict["width"] = width
+		info_dict["height"] = height
+	if compression is not None:
+		infotext += f"Compression: {compression}\n"
+		info_dict["compression"] = compression
+	if batch is not None:
+		infotext += f"Batch Size: {batch}\n"
+		info_dict["batch"] = batch
+
+	if c_steps is not None:
+		infotext += f"Base Steps: {c_steps}\n"
+		info_dict["c_steps"] = c_steps
+	if c_seed is not None:
+		infotext += f"Base Seed: {c_seed}\n"
+		info_dict["c_seed"] = c_seed
+	if c_cfg is not None:
+		infotext += f"Base CFG: {c_cfg}\n"
+		info_dict["c_cfg"] = c_cfg
+	if shift is not None:
+		infotext += f"Base Shift: {shift}\n"
+		info_dict["shift"] = shift
+	if stage_c is not None:
+		infotext += f"Base Model: {stage_c}\n"
+		info_dict["stage_c"] = stage_c
+	if clip is not None:
+		infotext += f"CLIP Model: {clip}\n"
+		info_dict["clip"] = clip
+
+	if b_steps is not None:
+		infotext += f"Refiner Steps: {b_steps}\n"
+		info_dict["b_steps"] = b_steps
+	if b_seed is not None:
+		infotext += f"Refiner Seed: {b_seed}\n"
+		info_dict["b_seed"] = b_seed
+	if b_cfg is not None:
+		infotext += f"Refiner CFG: {b_cfg}\n"
+		info_dict["b_cfg"] = b_cfg
+	if stage_b is not None:
+		infotext += f"Refiner Model: {stage_b}\n"
+		info_dict["stage_b"] = stage_b
+	if use_hq is not None:
+		infotext += f"High Quality Decoder: {'True' if use_hq else 'False'}\n"
+		info_dict["use_hq"] = use_hq
+	if origin_tab is not None:
+		infotext += f"Generation Type: {origin_tab}"
+	return infotext, info_dict
 
 # Handle ComfyUI generation workflow specific actions:
 def queue_workflow_websocket(workflow):
@@ -428,26 +472,26 @@ def process_basic_txt2img(
 		gallery_images = gen_images_websocket(ws, workflow)
 		timer_finish = f"{time.time()-timer_start:.2f}"
 		
+		gen_info, gen_dict = create_infotext_objects(
+			pos, neg, width, height, steps_c, workflow["3"]["inputs"]["seed"],
+			cfg_c, batch, compression, shift, steps_b, workflow["33"]["inputs"]["seed"],
+			cfg_b, stage_b, stage_c, clip_model, use_hq_stage_a, "Text to Image", markdown=True
+		)
+
 		# Save images to disk if enabled
 		local_paths = []
 		if save_images:
-			gen_emb = create_embed_text(
-				pos, neg, width, height, steps_c, workflow["3"]["inputs"]["seed"],
-				cfg_c, batch, compression, shift, steps_b, workflow["33"]["inputs"]["seed"],
-				cfg_b, stage_b, stage_c, clip_model, use_hq_stage_a, "Text to Image"
-			)
 			for image in gallery_images:
 				file_path = get_image_save_path("txt2img")
-				save_image_with_meta(image[0], workflow, gen_emb, file_path)
+				save_image_with_meta(image[0], workflow, json.dumps(gen_dict), file_path)
 				local_paths.append(file_path)
 
-		gen_info = create_markdown_infotext(
-			pos, neg, width, height, steps_c, workflow["3"]["inputs"]["seed"],
-			cfg_c, batch, compression, shift, steps_b, workflow["33"]["inputs"]["seed"],
-			cfg_b, stage_b, stage_c, clip_model, use_hq_stage_a, "Text to Image"
-		)
 		gen_info += f"\nTotal Time: **{timer_finish}s**"
-		return gallery_images if not save_images else local_paths, gen_info
+
+		global last_generation
+		last_generation = copy.deepcopy(gen_dict)
+		gen_dict["batch"] = 1
+		return gallery_images if not save_images else local_paths, gen_info, json.dumps(gen_dict)
 	else:
 		raise gr.Error("CAP Feature Unavailable.")
 
@@ -542,13 +586,14 @@ def process_basic_img2img(
 		gallery_images = gen_images_websocket(ws, workflow)
 		timer_finish = f"{time.time()-timer_start:.2f}"
 
+		gen_info, gen_dict = create_infotext_objects(
+			pos, neg, width, height, steps_c, workflow["3"]["inputs"]["seed"],
+			cfg_c, batch, compression, shift, steps_b, workflow["33"]["inputs"]["seed"],
+			cfg_b, stage_b, stage_c, clip_model, use_hq_stage_a, "Image to Image", markdown=True
+		)
+
 		local_paths = []
 		if save_images:
-			gen_emb = create_embed_text(
-				pos, neg, width, height, steps_c, workflow["3"]["inputs"]["seed"],
-				cfg_c, batch, compression, shift, steps_b, workflow["33"]["inputs"]["seed"], 
-				cfg_b, stage_b, stage_c, clip_model, use_hq_stage_a, "Image to Image"
-			)
 			# Zero out the base64 encoded image for space saving reasons
 			workflow["100"]["inputs"]["base64_image"] = ""
 			total_images = batch
@@ -556,18 +601,15 @@ def process_basic_img2img(
 				total_images += 1
 			for image in gallery_images:
 				file_path = get_image_save_path("img2img")
-				save_image_with_meta(image[0], workflow, gen_emb, file_path)
+				save_image_with_meta(image[0], workflow, json.dumps(gen_dict), file_path)
 				local_paths.append(file_path)
-
-		gen_info = create_markdown_infotext(
-			pos, neg, width, height, steps_c, workflow["3"]["inputs"]["seed"],
-			cfg_c, batch, compression, shift, steps_b, workflow["33"]["inputs"]["seed"],
-			cfg_b, stage_b, stage_c, clip_model, use_hq_stage_a, "Image to Image"
-		)
 
 		gen_info += f"\nTotal Time: **{timer_finish}s**"
 
-		return gallery_images if not save_images else local_paths, gen_info
+		global last_generation
+		last_generation = copy.deepcopy(gen_dict)
+		gen_dict["batch"] = 1
+		return gallery_images if not save_images else local_paths, gen_info, json.dumps(gen_dict)
 
 def process_basic_inpaint(
 		input_image, mask_image, copy_orig, crop_type, 
@@ -667,14 +709,14 @@ def process_basic_inpaint(
 		gallery_images = gen_images_websocket(ws, workflow)
 		timer_finish = f"{time.time()-timer_start:.2f}"
 
-		local_paths = []
+		gen_info, gen_dict = create_infotext_objects(
+			pos, neg, width, height, steps_c, workflow["3"]["inputs"]["seed"],
+			cfg_c, batch, compression, shift, steps_b, workflow["33"]["inputs"]["seed"],
+			cfg_b, stage_b, stage_c, clip_model, use_hq_stage_a, "Inpainting", markdown=True
+		)
 
+		local_paths = []
 		if save_images:
-			gen_emb = create_embed_text(
-				pos, neg, width, height, steps_c, workflow["3"]["inputs"]["seed"],
-				cfg_c, batch, compression, shift, steps_b, workflow["33"]["inputs"]["seed"],
-				cfg_b, stage_b, stage_c, clip_model, use_hq_stage_a, "Inpainting"
-			)
 			# Zero out the base64 encoded image for space saving reasons
 			workflow["129"]["inputs"]["base64_image"] = ""
 			workflow["130"]["inputs"]["base64_image"] = ""
@@ -685,7 +727,7 @@ def process_basic_inpaint(
 
 			for image in gallery_images:
 				file_path = get_image_save_path("inpainting")
-				save_image_with_meta(image[0], workflow, gen_emb, file_path)
+				save_image_with_meta(image[0], workflow, json.dumps(gen_dict), file_path)
 				local_paths.append(file_path)
 
 		if copy_orig:
@@ -695,7 +737,7 @@ def process_basic_inpaint(
 				local_paths.append(input_image)
 		
 		if save_mask:
-			file_path = get_image_save_path("inpainting")
+			file_path = get_image_save_path("inpainting", "mask")
 			resized_mask.save(file_path, comopression=4)
 			if not save_images:
 				gallery_images.append(file_path)
@@ -703,11 +745,9 @@ def process_basic_inpaint(
 				local_paths.append(file_path)
 
 
-		gen_info = create_markdown_infotext(
-			pos, neg, width, height, steps_c, workflow["3"]["inputs"]["seed"],
-			cfg_c, batch, compression, shift, steps_b, workflow["33"]["inputs"]["seed"],
-			cfg_b, stage_b, stage_c, clip_model, use_hq_stage_a, "Inpainting"
-		)
 		gen_info += f"\nTotal Time: **{timer_finish}s**"
 
-		return gallery_images if not save_images else local_paths, gen_info
+		global last_generation
+		last_generation = copy.deepcopy(gen_dict)
+		gen_dict["batch"] = 1
+		return gallery_images if not save_images else local_paths, gen_info, json.dumps(gen_dict)
