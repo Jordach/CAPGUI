@@ -118,6 +118,7 @@ import base64
 import math
 import hashlib
 from cap_util.metadata import save_image_with_meta
+from cap_util.gui_xy import process_xy_images
 
 def load_config():
 	global gui_default_settings
@@ -401,12 +402,19 @@ def gen_images_websocket(ws, workflow):
 
 	return gallery_images
 
+def process_generate_button(*args):
+	if args[22] != 'None' or args[25] != 'None':
+		return process_xy_images(*args)
+	else:
+		return process_basic_txt2img(*args)
+
 def process_basic_txt2img(
 		pos, neg, steps_c, seed_c, width, height, 
 		cfg_c, batch, compression, shift, latent_id, 
 		seed_b, cfg_b, steps_b, stage_b, 
 		stage_c, clip_model, backend, use_hq_stage_a,
-		save_images
+		save_images,
+		xy_x_string, xy_x_dropdown, xy_x_type, xy_y_string, xy_y_dropdown, xy_y_type
 ):
 	global gui_default_settings
 	global ws
