@@ -14,14 +14,15 @@ def txt2img_tab(global_ctx, local_ctx):
 # This sets up the functions like the generate button after elements have been initialised
 def txt2img_tab_post_hook(global_ctx, local_ctx):
 	local_ctx["generate"].click(
-		cap_util.process_basic_txt2img,
+		cap_util.process_generate_button,
 		inputs = [
 			local_ctx["pos_prompt"],          local_ctx["neg_prompt"],     local_ctx["stage_c_steps"], local_ctx["stage_c_seed"],
 			local_ctx["stage_c_width"],       local_ctx["stage_c_height"], local_ctx["stage_c_cfg"],   local_ctx["stage_c_batch"],
 			local_ctx["stage_c_compression"], local_ctx["stage_c_shift"],  local_ctx["stage_c_single_latent"],
 			local_ctx["stage_b_seed"],        local_ctx["stage_b_cfg"],    local_ctx["stage_b_steps"],
 			global_ctx["topbar"]["stage_b"], global_ctx["topbar"]["stage_c"], global_ctx["topbar"]["clip"], global_ctx["topbar"]["backend"],
-			local_ctx["use_stage_a_hq"],      local_ctx["stage_c_save_images"]
+			local_ctx["use_stage_a_hq"],      local_ctx["stage_c_save_images"],
+			local_ctx["xy_x_string"],local_ctx["xy_x_dropdown"],local_ctx["xy_x_type"],local_ctx["xy_y_string"],local_ctx["xy_y_dropdown"],local_ctx["xy_y_type"]
 		],
 		outputs=[local_ctx["gallery"], local_ctx["gen_info_box"], local_ctx["gen_json"]],
 		show_progress="minimal", 

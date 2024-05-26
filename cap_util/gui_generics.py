@@ -2,6 +2,7 @@
 import cap_util
 import gradio as gr
 import copy
+from cap_util.gui_xy import gui_xy
 
 # Functions
 def dummy_post_hook(global_ctx, local_ctx):
@@ -50,6 +51,7 @@ def get_send_to_dropdown(global_ctx):
 	return gr.Dropdown(["not initialised"], multiselect=False, interactive=True, label="Send To Tab:")
 
 def get_prompt_row(global_ctx, local_ctx, prompt_scale, extra_buttons_fn=dummy_post_hook):
+
 	with gr.Row(elem_id="promptbar"):
 		with gr.Column(scale=prompt_scale):
 			local_ctx["pos_prompt"] = get_pos_prompt_box()
@@ -212,6 +214,10 @@ def get_generation_settings_column(global_ctx, local_ctx):
 	
 	with gr.Accordion("Extras:", open=False, elem_id="extra_settings"):
 		local_ctx["use_stage_a_hq"] = gr.Checkbox(True, label="Use High Quality Decoder?", info="Uses a custom finetune of Stage A to decode latents with less overall blur.")
+
+		with gr.Accordion(label="X/Y Settings:", open=False, elem_id="base_settings") as xy_block:
+			gui_xy(global_ctx, local_ctx)
+		
 		gr.Markdown("To be continued")
 	
 	# Make the swapping of aspect ratios universal across tabs
