@@ -15,7 +15,7 @@ from PIL import Image, ImageDraw, ImageFont
 
 def gui_xy(global_ctx, local_ctx):
 
-        xy_types = ["None","Checkpoint","Positive S/R","Negative S/R","Steps C","Steps B","Compression","CFG C","CFG B","Seed"]
+        xy_types = ["None","stage_c", "stage_b", "clip", "Positive S/R","Negative S/R","Steps C","Steps B","Compression","CFG C","CFG B","Seed"]
 
         local_ctx["xy_x_type"] = gr.Dropdown(xy_types, multiselect=False, interactive=True, label="X Type", value="None")
         local_ctx["xy_x_string"] = gr.TextArea(value="", visible=False,label="X Values")
@@ -34,16 +34,23 @@ def gui_xy(global_ctx, local_ctx):
 
 
 def xy_check_visibility(type):
-    return gr.TextArea(visible=bool(type != 'Checkpoint' and type != 'None'))
+    return gr.TextArea(visible=bool(type != 'stage_c' and type != 'stage_b' and type != 'clip' and type != 'None'))
 
 def xy_check_dropdown_visibility(type):
-    return gr.Dropdown(visible=bool(type == 'Checkpoint'))
+    return gr.Dropdown(visible=bool(type == 'stage_c' or type == 'stage_b' or type == 'clip'))
 
 def update_dropdown_choices(type):
 	match type:
-		case "Checkpoint": 
+		case "stage_c":
 			_, _, stage_c_models = cap_util.scan_for_comfy_models()
 			return gr.Dropdown(choices=stage_c_models)
+
+		case "stage_b":
+			_, stage_b_models, _ = cap_util.scan_for_comfy_models()
+			return gr.Dropdown(choices=stage_b_models)
+		case "clip":
+			clip_models, _, _ = cap_util.scan_for_comfy_models()
+			return gr.Dropdown(choices=clip_models)
 		case _:
 			return []
     
@@ -66,8 +73,20 @@ def process_xy_images(
 	def find_strings(text):
 		return [str.replace("\"","").strip() for str in re.findall(r'"[^"]*"|[^,]+', text.replace("\n",","))]
 
-	x_list = xy_x_dropdown if xy_x_type == 'Checkpoint' else find_strings(xy_x_string) if xy_x_type != 'None' else ['']
-	y_list = xy_y_dropdown if xy_y_type == 'Checkpoint' else find_strings(xy_y_string) if xy_y_type != 'None' else ['']
+	# Make sure to define xy_x_dropdown and xy_y_dropdown before using them
+
+	x_list = (
+		xy_x_dropdown if xy_x_type in ['stage_c', 'stage_b', 'clip' ] else
+		find_strings(xy_x_string) if xy_x_type not in ['None', None] else
+		['']
+	)
+
+	y_list = (
+		xy_y_dropdown if xy_y_type in ['stage_c', 'stage_b', 'clip' ] else
+		find_strings(xy_y_string) if xy_y_type not in ['None', None] else
+		['']
+	)
+
 
 	if len(x_list) == 0 or len(y_list) == 0:
 		raise ValueError("There should be at least one image created")
@@ -102,7 +121,11 @@ def process_xy_images(
 								raise ValueError(f"{search} not found in negative prompt")
 							neg = neg.replace(search, value)
 
-						case 'Checkpoint': nonlocal stage_c; stage_c = value
+						case 'stage_c': nonlocal stage_c; stage_c = value
+
+						case 'stage_b': nonlocal stage_b; stage_b = value
+
+						case 'clip': nonlocal clip_model; clip_model = value
 
 						case 'Steps C': checkint(value); nonlocal steps_c; steps_c = value
 
