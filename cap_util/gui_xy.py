@@ -90,6 +90,9 @@ def process_xy_images(
 
 	if len(x_list) == 0 or len(y_list) == 0:
 		raise ValueError("There should be at least one image created")
+	
+	random_seed_b = random.randint(0, 2147483647)
+	random_seed_c = random.randint(0, 2147483647)
 
 	# Loop over each X and Y element
 	for y in y_list:
@@ -156,7 +159,7 @@ def process_xy_images(
 
 				# Stage C KSampler
 				workflow["3"]["inputs"]["steps"] = steps_c
-				workflow["3"]["inputs"]["seed"]  = seed_c if seed_c > -1 else random.randint(0, 2147483647)
+				workflow["3"]["inputs"]["seed"]  = seed_c if seed_c > -1 else random_seed_c
 				workflow["3"]["inputs"]["cfg"]   = cfg_c
 
 				# EmptyLatentImage
@@ -175,7 +178,7 @@ def process_xy_images(
 				workflow["77"]["inputs"]["unet_name"] = stage_b
 
 				# Stage B KSampler
-				workflow["33"]["inputs"]["seed"]  = seed_b if seed_b > -1 else random.randint(0, 2147483647)
+				workflow["33"]["inputs"]["seed"]  = seed_b if seed_b > -1 else random_seed_b
 				workflow["33"]["inputs"]["steps"] = steps_b
 				workflow["33"]["inputs"]["cfg"]   = cfg_b
 
