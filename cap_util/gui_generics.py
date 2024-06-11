@@ -44,7 +44,7 @@ def reload_preset_b():
 	return cap_util.ksampler_presets_stage_b_dropdown
 
 def load_preset_settings_b(preset):
-	settings = cap_util.ksampler_presets_stage_c[preset]
+	settings = cap_util.ksampler_presets_stage_b[preset]
 	return settings["sampler"], settings["scheduler"], settings["steps"], settings["cfg"]
 
 def save_preset_settings_b(sampler, scheduler, steps, cfg, filename, desc):

@@ -73,7 +73,7 @@ gui_default_settings = {
 
 	"gen_b_cfg": 1.5,
 	"gen_b_cfg_min": 1.0,
-	"gen_b_cfg_max": 3.5,
+	"gen_b_cfg_max": 4,
 	"gen_b_cfg_step": 0.05,
 
 	"gen_b_denoise": 1.0,
