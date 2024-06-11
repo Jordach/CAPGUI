@@ -239,6 +239,10 @@ def get_generation_settings_column(global_ctx, local_ctx):
 
 	with gr.Accordion(label="Refiner Settings:", open=False, elem_id="refiner_settings"):
 		gr.Markdown("These settings are for the Stage B portion of Stable Cascade.\n\nIt's advised that you don't touch these - but if an image seems to come out wrong or has some kind of artifacting, try changing these settings.\n\nYou have been warned.", line_breaks=True)
+		with gr.Row():
+			local_ctx["stage_b_preset_dropdown"] = gr.Dropdown(reload_preset_b(), scale=6, label="Load Preset:", value=cap_util.ksampler_presets_stage_b_dropdown[0][1], multiselect=False, filterable=False)
+			local_ctx["stage_b_preset_reload"] = gr.Button("🔄", scale=1)
+			local_ctx["stage_b_preset_reload"].click(reload_preset_b, inputs=None, outputs=[local_ctx["stage_b_preset_dropdown"]])
 		local_ctx["stage_b_seed"] = gr.Number(value=-1, minimum=-1, maximum=2147483647, precision=0, label="Seed:", scale=2, interactive=True)
 		local_ctx["stage_b_steps"] = gr.Slider(
 			minimum=cap_util.gui_default_settings["gen_b_steps_min"],
@@ -256,10 +260,6 @@ def get_generation_settings_column(global_ctx, local_ctx):
 		)
 
 		# KSampler Settings
-		with gr.Row():
-			local_ctx["stage_b_preset_dropdown"] = gr.Dropdown(reload_preset_b(), scale=6, label="Load Preset:", value=cap_util.ksampler_presets_stage_b_dropdown[0][1], multiselect=False, filterable=False)
-			local_ctx["stage_b_preset_reload"] = gr.Button("🔄", scale=1)
-			local_ctx["stage_b_preset_reload"].click(reload_preset_b, inputs=None, outputs=[local_ctx["stage_b_preset_dropdown"]])
 		with gr.Row():
 			local_ctx["stage_b_preset_save"] = gr.Button("Save Preset", scale=1)
 			local_ctx["stage_b_preset_name"] = gr.Textbox(value="", lines=1, max_lines=1, placeholder="my_custom_file_name", label="Preset File Name:", scale=3)
