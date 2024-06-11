@@ -2,6 +2,7 @@
 import cap_util
 import gradio as gr
 import copy
+from cap_util import presets
 from cap_util.gui_xy import gui_xy
 
 # Functions
@@ -26,9 +27,31 @@ def send_to_targets(global_ctx, current_tab):
 	
 	return targets
 
+# Component functions for loading, refreshing and saving of Sampling presets
+def reload_preset_c():
+	presets.load_all_user_presets(c=True)
+	return cap_util.ksampler_presets_stage_c_dropdown
+
+def load_preset_settings_c(preset):
+	settings = cap_util.ksampler_presets_stage_c[preset]
+	return settings["sampler"], settings["scheduler"], settings["steps"], settings["cfg"], settings["shift"]
+
+def save_preset_settings_c(sampler, scheduler, steps, cfg, shift, filename, desc):
+	presets.save_as_new_preset(filename, desc, "c", steps, cfg, sampler, scheduler, shift)
+
+def reload_preset_b():
+	presets.load_all_user_presets(b=True)
+	return cap_util.ksampler_presets_stage_b_dropdown
+
+def load_preset_settings_b(preset):
+	settings = cap_util.ksampler_presets_stage_c[preset]
+	return settings["sampler"], settings["scheduler"], settings["steps"], settings["cfg"]
+
+def save_preset_settings_b(sampler, scheduler, steps, cfg, filename, desc):
+	presets.save_as_new_preset(filename, desc, "b", steps, cfg, sampler, scheduler)
+
 # Components that are shared or common to multiple tabs
 # these usually do not come with functions
-
 def get_pos_prompt_box():
 	return gr.Textbox(label=None, show_label=False, placeholder="Enter a prompt here.", lines=3, elem_id="pos_prompt", elem_classes=["prompt"])
 
@@ -51,7 +74,6 @@ def get_send_to_dropdown(global_ctx):
 	return gr.Dropdown(["not initialised"], multiselect=False, interactive=True, label="Send To Tab:")
 
 def get_prompt_row(global_ctx, local_ctx, prompt_scale, extra_buttons_fn=dummy_post_hook):
-
 	with gr.Row(elem_id="promptbar"):
 		with gr.Column(scale=prompt_scale):
 			local_ctx["pos_prompt"] = get_pos_prompt_box()
@@ -193,7 +215,28 @@ def get_generation_settings_column(global_ctx, local_ctx):
 					inputs=[local_ctx["stage_c_width"], local_ctx["stage_c_height"], local_ctx["stage_c_auto_compressor"], local_ctx["stage_c_compression"]],
 					outputs = [local_ctx["stage_c_compression"], local_ctx["aspect_info"], local_ctx["latent_res"]], show_progress=False, queue=False
 				)
-		
+		# KSampler Settings
+		with gr.Row():
+			local_ctx["stage_c_preset_dropdown"] = gr.Dropdown(reload_preset_c(), scale=6, label="Load Preset:", value=cap_util.ksampler_presets_stage_c_dropdown[0][1], multiselect=False, filterable=False)
+			local_ctx["stage_c_preset_reload"] = gr.Button("🔄", scale=1)
+			local_ctx["stage_c_preset_reload"].click(reload_preset_c, inputs=None, outputs=[local_ctx["stage_c_preset_dropdown"]], show_progress="hidden")
+		with gr.Accordion(label="Advanced Sampling Settings:", open=False):
+			with gr.Row():
+				local_ctx["stage_c_preset_save"] = gr.Button("Save Preset", scale=1)
+				local_ctx["stage_c_preset_name"] = gr.Textbox(value="", lines=1, max_lines=1, placeholder="my_custom_file_name", label="Preset File Name:", scale=3)
+				local_ctx["stage_c_preset_desc"] = gr.Textbox(value="", lines=1, max_lines=1, placeholder="My Custom Label", label="Preset Label:", scale=3)
+			with gr.Row():
+				local_ctx["stage_c_sampler"] = gr.Dropdown(cap_util.ksampler_samplers, value=cap_util.ksampler_samplers[0][1], label="Denoising Sampler:")
+				local_ctx["stage_c_scheduler"] = gr.Dropdown(cap_util.ksampler_schedules, value=cap_util.ksampler_schedules[0][1], label="Denoising Schedule:")
+		local_ctx["stage_c_preset_dropdown"].input(load_preset_settings_c, inputs=[local_ctx["stage_c_preset_dropdown"]], 
+			outputs=[local_ctx["stage_c_sampler"], local_ctx["stage_c_scheduler"], local_ctx["stage_c_steps"], local_ctx["stage_c_cfg"], local_ctx["stage_c_shift"]], show_progress=None
+		)
+		local_ctx["stage_c_preset_save"].click(save_preset_settings_c, 
+			inputs=[local_ctx["stage_c_sampler"], local_ctx["stage_c_scheduler"], local_ctx["stage_c_steps"], local_ctx["stage_c_cfg"], local_ctx["stage_c_shift"], local_ctx["stage_c_preset_name"], local_ctx["stage_c_preset_desc"]], 
+			outputs=None
+		)
+
+
 	with gr.Accordion(label="Refiner Settings:", open=False, elem_id="refiner_settings"):
 		gr.Markdown("These settings are for the Stage B portion of Stable Cascade.\n\nIt's advised that you don't touch these - but if an image seems to come out wrong or has some kind of artifacting, try changing these settings.\n\nYou have been warned.", line_breaks=True)
 		local_ctx["stage_b_seed"] = gr.Number(value=-1, minimum=-1, maximum=2147483647, precision=0, label="Seed:", scale=2, interactive=True)
@@ -211,7 +254,27 @@ def get_generation_settings_column(global_ctx, local_ctx):
 			step=cap_util.gui_default_settings["gen_b_cfg_step"],
 			label="Refiner CFG:", interactive=True
 		)
-	
+
+		# KSampler Settings
+		with gr.Row():
+			local_ctx["stage_b_preset_dropdown"] = gr.Dropdown(reload_preset_b(), scale=6, label="Load Preset:", value=cap_util.ksampler_presets_stage_b_dropdown[0][1], multiselect=False, filterable=False)
+			local_ctx["stage_b_preset_reload"] = gr.Button("🔄", scale=1)
+			local_ctx["stage_b_preset_reload"].click(reload_preset_b, inputs=None, outputs=[local_ctx["stage_b_preset_dropdown"]])
+		with gr.Row():
+			local_ctx["stage_b_preset_save"] = gr.Button("Save Preset", scale=1)
+			local_ctx["stage_b_preset_name"] = gr.Textbox(value="", lines=1, max_lines=1, placeholder="my_custom_file_name", label="Preset File Name:", scale=3)
+			local_ctx["stage_b_preset_desc"] = gr.Textbox(value="", lines=1, max_lines=1, placeholder="My Custom Label", label="Preset Label:", scale=3)
+		with gr.Row():
+			local_ctx["stage_b_sampler"] = gr.Dropdown(cap_util.ksampler_samplers, value=cap_util.ksampler_samplers[0][1], label="Denoising Sampler:")
+			local_ctx["stage_b_scheduler"] = gr.Dropdown(cap_util.ksampler_schedules, value=cap_util.ksampler_schedules[0][1], label="Denoising Schedule:")
+		local_ctx["stage_b_preset_dropdown"].input(load_preset_settings_b, inputs=[local_ctx["stage_b_preset_dropdown"]], 
+			outputs=[local_ctx["stage_b_sampler"], local_ctx["stage_b_scheduler"], local_ctx["stage_b_steps"], local_ctx["stage_b_cfg"]], show_progress="None"
+		)
+		local_ctx["stage_b_preset_save"].click(save_preset_settings_b, 
+			inputs=[local_ctx["stage_b_sampler"], local_ctx["stage_b_scheduler"], local_ctx["stage_b_steps"], local_ctx["stage_b_cfg"], local_ctx["stage_b_preset_name"], local_ctx["stage_b_preset_desc"]], 
+			outputs=None
+		)
+
 	with gr.Accordion("Extras:", open=False, elem_id="extra_settings"):
 		local_ctx["use_stage_a_hq"] = gr.Checkbox(True, label="Use High Quality Decoder?", info="Uses a custom finetune of Stage A to decode latents with less overall blur.")
 

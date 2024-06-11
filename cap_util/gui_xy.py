@@ -59,7 +59,8 @@ def process_xy_images(
 		cfg_c, batch, compression, shift, latent_id, 
 		seed_b, cfg_b, steps_b, stage_b, 
 		stage_c, clip_model, backend, use_hq_stage_a,
-		save_images, xy_x_string, xy_x_dropdown, xy_x_type, xy_y_string, xy_y_dropdown, xy_y_type
+		save_images, xy_x_string, xy_x_dropdown, xy_x_type, xy_y_string, xy_y_dropdown, xy_y_type,
+		c_sampler, c_schedule, b_sampler, b_schedule
 ):
 	pos_original = pos
 	neg_original = neg

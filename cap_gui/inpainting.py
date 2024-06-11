@@ -47,7 +47,8 @@ def create_mask_and_gen(
 		height, cfg_c, batch, compression, 
 		shift, latent_id, seed_b, cfg_b, steps_b, 
 		stage_b, stage_c, clip_model, backend,
-		denoise, use_hq_stage_a, save_images, save_mask
+		denoise, use_hq_stage_a, save_images, save_mask,
+		c_sampler, c_scheduler, b_sampler, b_scheduler
 ):
 	_img = editor_images["layers"][0]
 	path = cap_util.get_image_save_path("inpainting")
@@ -90,7 +91,8 @@ def create_mask_and_gen(
 		height, cfg_c, batch, compression,
 		shift, latent_id, seed_b, cfg_b, steps_b,
 		stage_b, stage_c, clip_model, backend,
-		denoise, use_hq_stage_a, save_images, save_mask
+		denoise, use_hq_stage_a, save_images, save_mask,
+		c_sampler, c_scheduler, b_sampler, b_scheduler
 	)
 
 	return images, gen_info, infodict
@@ -148,7 +150,8 @@ def inpaint_tab_post_hook(global_ctx, local_ctx):
 			local_ctx["stage_c_compression"], local_ctx["stage_c_shift"],     local_ctx["stage_c_single_latent"],
 			local_ctx["stage_b_seed"],        local_ctx["stage_b_cfg"],       local_ctx["stage_b_steps"],
 			global_ctx["topbar"]["stage_b"], global_ctx["topbar"]["stage_c"], global_ctx["topbar"]["clip"], global_ctx["topbar"]["backend"],
-			local_ctx["stage_c_denoise"],    local_ctx["use_stage_a_hq"], local_ctx["stage_c_save_images"], local_ctx["save_mask"]
+			local_ctx["stage_c_denoise"],    local_ctx["use_stage_a_hq"], local_ctx["stage_c_save_images"], local_ctx["save_mask"],
+			local_ctx["stage_c_sampler"], local_ctx["stage_c_scheduler"], local_ctx["stage_b_sampler"], local_ctx["stage_b_scheduler"]
 		],
 		outputs=[local_ctx["gallery"], local_ctx["gen_info_box"], local_ctx["gen_json"]],
 		show_progress="minimal",
@@ -161,7 +164,9 @@ def inpaint_tab_post_hook(global_ctx, local_ctx):
 			local_ctx["pos_prompt"], local_ctx["neg_prompt"], local_ctx["stage_c_width"], local_ctx["stage_c_height"],
 			local_ctx["stage_c_compression"], local_ctx["stage_c_auto_compressor"], local_ctx["stage_c_batch"], local_ctx["stage_c_single_latent"],
 			local_ctx["stage_c_steps"], local_ctx["stage_c_seed"], local_ctx["stage_c_cfg"], local_ctx["stage_c_shift"],
-			local_ctx["stage_b_steps"], local_ctx["stage_b_seed"], local_ctx["stage_b_cfg"], local_ctx["stage_c_image_editor"]
+			local_ctx["stage_b_steps"], local_ctx["stage_b_seed"], local_ctx["stage_b_cfg"],
+			local_ctx["stage_c_sampler"], local_ctx["stage_c_scheduler"], local_ctx["stage_b_sampler"], local_ctx["stage_b_scheduler"],
+			local_ctx["stage_c_image_editor"],
 		], show_progress="minimal", trigger_mode="once", queue=False,
 	)
 

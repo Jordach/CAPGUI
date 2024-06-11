@@ -270,6 +270,15 @@ def read_infodict_from_image(image):
 		# Try loading the string as JSON data - on exception load Auto1111 style meta
 		try:
 			infodict = json.loads(alpha_data)
+			# Handle older CAPGUI json data that predate the sampler/scheduler settings
+			if "c_sampler" not in infodict:
+				infodict["c_sampler"] = "euler_ancestral"
+			if "c_schedule" not in infodict:
+				infodict["c_schedule"] = "simple"
+			if "b_sampler" not in infodict:
+				infodict["b_sampler"] = "euler_ancestral"
+			if "b_schedule" not in infodict:
+				infodict["b_schedule"] = "simple"
 			infotext = cap_util.create_infotext_from_dict(infodict, markdown=True)
 			return infotext, infodict
 		except:

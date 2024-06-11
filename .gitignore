@@ -170,3 +170,5 @@ generations/inpainting/*
 generations/txt2img/*
 flagged/
 tmp/
+presets/
+presets/*

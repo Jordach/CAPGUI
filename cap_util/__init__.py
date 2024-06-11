@@ -96,6 +96,92 @@ inpaint_mask_types = [
 	"ComfyUI"
 ]
 
+ksampler_samplers = [
+	("Euler A", "euler_ancestral"),
+	("Euler", "euler"),
+	("Heun", "heun"),
+	("Heun++2", "heunpp2"),
+	("DPM 2", "dpm_2"),
+	("DPM 2 A", "dpm_2_ancestral"),
+	("LMS", "lms"),
+	("DPM Fast", "dpm_fast"),
+	("DPM Adaptive", "dpm_adaptive"),
+	("DPM++ 2S A", "dpmpp_2s_ancestral"),
+	("DPM++ SDE", "dpmpp_sde"),
+	("DPM++ SDE (GPU Noise)", "dpmpp_sde_gpu"),
+	("DPM++ 2M", "dpmpp_2m"),
+	("DPM++ 2M SDE", "dpmpp_2m_sde"),
+	("DPM++ 2M SDE (GPU Noise)", "dpmpp_2m_sde_gpu"),
+	("DPM++ 3M SDE", "dpmpp_3m_sde"),
+	("DPM++ 3M SDE (GPU Noise)", "dpmpp_3m_sde_gpu"),
+	("DDPM", "ddpm"),
+	("DDIM", "ddim"),
+	("UniPC", "uni_pc"),
+	("UniPC (BH2)", "uni_pc_bh2"),
+]
+
+ksampler_schedules = [
+	("Simple", "simple"),
+	("Normal", "normal"),
+	("Karras", "karras"),
+	("Exponential", "exponential"),
+	("SGM Uniform", "sgm_uniform"),
+	("DDIM Uniform", "ddim_uniform"),
+]
+
+ksampler_presets_stage_c = {}
+ksampler_presets_stage_c["builtin_basic"] = {
+	"sampler": "euler_ancestral",
+	"scheduler": "simple",
+	"steps": 20,
+	"cfg": 4,
+	"shift": 2,
+}
+
+ksampler_presets_stage_c["builtin_quality"] = {
+	"sampler": "dpmpp_2m_sde",
+	"scheduler": "simple",
+	"steps": 20,
+	"cfg": 4,
+	"shift": 2,
+}
+
+ksampler_presets_stage_c["builtin_fast"] = {
+	"sampler": "dpmpp_sde",
+	"scheduler": "simple",
+	"steps": 12,
+	"cfg": 4,
+	"shift": 2,
+}
+
+ksampler_presets_stage_c_dropdown = []
+ksampler_presets_stage_c_builtin = [
+	("Basic Default",   "builtin_basic"),
+	("Quality Default", "builtin_quality"),
+	("Fast Default",    "builtin_fast"),
+]
+
+ksampler_presets_stage_b = {}
+ksampler_presets_stage_b["builtin_basic"] = {
+	"sampler": "euler_ancestral",
+	"scheduler": "simple",
+	"steps": 12,
+	"cfg": 1.5,
+}
+
+ksampler_presets_stage_b["builtin_fast"] = {
+	"sampler": "dpmpp_sde",
+	"scheduler": "simple",
+	"steps": 3,
+	"cfg": 1.1,
+}
+
+ksampler_presets_stage_b_dropdown = []
+ksampler_presets_stage_b_builtin = [
+	("Basic Default", "builtin_basic"),
+	("Fast Default",  "builtin_fast"),
+]
+
 # Imports for functions and actions
 import json
 import urllib
@@ -285,6 +371,10 @@ def create_infotext_from_dict(info_dict, markdown=False):
 		infotext += f"Base CFG: {info_dict['c_cfg']}\n"
 	if "shift" in info_dict:
 		infotext += f"Base Shift: {info_dict['shift']}\n"
+	if "c_sampler" in info_dict:
+		infotext += f"Base Sampler: {info_dict['c_sampler']}\n"
+	if "c_schedule" in info_dict:
+		infotext += f"Base Sampler: {info_dict['c_schedule']}\n"
 	if "stage_c" in info_dict:
 		infotext += f"Base Model: {info_dict['stage_c']}\n"
 	if "clip" in info_dict:
@@ -296,6 +386,10 @@ def create_infotext_from_dict(info_dict, markdown=False):
 		infotext += f"Refiner Seed: {info_dict['b_seed']}\n"
 	if "b_cfg" in info_dict:
 		infotext += f"Refiner CFG: {info_dict['b_cfg']}\n"
+	if "b_sampler" in info_dict:
+		infotext += f"Refiner Sampler: {info_dict['b_sampler']}\n"
+	if "b_schedule" in info_dict:
+		infotext += f"Refiner Sampler: {info_dict['b_schedule']}\n"
 	if "stage_b" in info_dict:
 		infotext += f"Refiner Model: {info_dict['stage_b']}\n"
 	if "use_hq" in info_dict:
@@ -305,9 +399,10 @@ def create_infotext_from_dict(info_dict, markdown=False):
 
 def create_infotext_objects(
 	pos=None, neg=None, width=None, height=None, 
-	c_steps=None, c_seed=None, c_cfg=None, batch=None, 
-	compression=None, shift=None, b_steps=None, b_seed=None,
-	b_cfg=None, stage_b=None, stage_c=None, clip=None, use_hq=None,
+	c_steps=None, c_seed=None, c_cfg=None, c_sampler=None, c_schedule=None,
+	batch=None, compression=None, shift=None, b_steps=None, b_seed=None,
+	b_cfg=None, b_sampler=None, b_schedule=None,
+	stage_b=None, stage_c=None, clip=None, use_hq=None,
 	origin_tab=None, markdown=False
 ):
 	info_dict = {}
@@ -339,6 +434,12 @@ def create_infotext_objects(
 	if c_cfg is not None:
 		infotext += f"Base CFG: {c_cfg}\n"
 		info_dict["c_cfg"] = c_cfg
+	if c_sampler is not None:
+		infotext += f"Base Sampler: {c_sampler}\n"
+		info_dict["c_sampler"] = c_sampler
+	if c_schedule is not None:
+		infotext += f"Base Schedule: {c_schedule}\n"
+		info_dict["c_schedule"] = c_schedule
 	if shift is not None:
 		infotext += f"Base Shift: {shift}\n"
 		info_dict["shift"] = shift
@@ -358,6 +459,12 @@ def create_infotext_objects(
 	if b_cfg is not None:
 		infotext += f"Refiner CFG: {b_cfg}\n"
 		info_dict["b_cfg"] = b_cfg
+	if b_sampler is not None:
+		infotext += f"Refiner Sampler: {b_sampler}\n"
+		info_dict["b_sampler"] = b_sampler
+	if b_schedule is not None:
+		infotext += f"Refiner Schedule: {b_schedule}\n"
+		info_dict["b_schedule"] = b_schedule
 	if stage_b is not None:
 		infotext += f"Refiner Model: {stage_b}\n"
 		info_dict["stage_b"] = stage_b
@@ -402,19 +509,12 @@ def gen_images_websocket(ws, workflow):
 
 	return gallery_images
 
-def process_generate_button(*args):
-	if args[22] != 'None' or args[25] != 'None':
-		return process_xy_images(*args)
-	else:
-		return process_basic_txt2img(*args)
-
 def process_basic_txt2img(
 		pos, neg, steps_c, seed_c, width, height, 
 		cfg_c, batch, compression, shift, latent_id, 
 		seed_b, cfg_b, steps_b, stage_b, 
 		stage_c, clip_model, backend, use_hq_stage_a,
-		save_images,
-		xy_x_string, xy_x_dropdown, xy_x_type, xy_y_string, xy_y_dropdown, xy_y_type
+		save_images, c_sampler, c_schedule, b_sampler, b_schedule
 ):
 	global gui_default_settings
 	global ws
@@ -428,9 +528,11 @@ def process_basic_txt2img(
 	workflow["98"]["inputs"]["text"]  = neg
 
 	# Stage C KSampler
-	workflow["3"]["inputs"]["steps"] = steps_c
-	workflow["3"]["inputs"]["seed"]  = seed_c if seed_c > -1 else random.randint(0, 2147483647)
-	workflow["3"]["inputs"]["cfg"]   = cfg_c
+	workflow["3"]["inputs"]["steps"]        = steps_c
+	workflow["3"]["inputs"]["seed"]         = seed_c if seed_c > -1 else random.randint(0, 2147483647)
+	workflow["3"]["inputs"]["cfg"]          = cfg_c
+	workflow["3"]["inputs"]["sampler_name"] = c_sampler
+	workflow["3"]["inputs"]["scheduler"]    = c_schedule
 
 	# EmptyLatentImage
 	workflow["34"]["inputs"]["width"]       = width
@@ -448,9 +550,11 @@ def process_basic_txt2img(
 	workflow["77"]["inputs"]["unet_name"] = stage_b
 
 	# Stage B KSampler
-	workflow["33"]["inputs"]["seed"]  = seed_b if seed_b > -1 else random.randint(0, 2147483647)
-	workflow["33"]["inputs"]["steps"] = steps_b
-	workflow["33"]["inputs"]["cfg"]   = cfg_b
+	workflow["33"]["inputs"]["seed"]         = seed_b if seed_b > -1 else random.randint(0, 2147483647)
+	workflow["33"]["inputs"]["steps"]        = steps_b
+	workflow["33"]["inputs"]["cfg"]          = cfg_b
+	workflow["33"]["inputs"]["sampler_name"] = b_sampler
+	workflow["33"]["inputs"]["scheduler"]    = b_schedule
 
 	# Handle getting images from a batch:
 	if batch > 1 and latent_id > 0:
@@ -482,8 +586,8 @@ def process_basic_txt2img(
 		
 		gen_info, gen_dict = create_infotext_objects(
 			pos, neg, width, height, steps_c, workflow["3"]["inputs"]["seed"],
-			cfg_c, batch, compression, shift, steps_b, workflow["33"]["inputs"]["seed"],
-			cfg_b, stage_b, stage_c, clip_model, use_hq_stage_a, "Text to Image", markdown=True
+			cfg_c, c_sampler, c_schedule, batch, compression, shift, steps_b, workflow["33"]["inputs"]["seed"],
+			cfg_b, b_sampler, b_schedule, stage_b, stage_c, clip_model, use_hq_stage_a, "Text to Image", markdown=True
 		)
 
 		# Save images to disk if enabled
@@ -509,7 +613,8 @@ def process_basic_img2img(
 		batch, compression, shift, latent_id, 
 		seed_b, cfg_b, steps_b, 
 		stage_b, stage_c, clip_model, backend,
-		denoise, use_hq_stage_a, save_images
+		denoise, use_hq_stage_a, save_images, 
+		c_sampler, c_schedule, b_sampler, b_schedule
 ):
 	workflow = json.loads(workflows.get_basic_img2img())
 
@@ -519,10 +624,12 @@ def process_basic_img2img(
 	workflow["106"]["inputs"]["text"] = neg
 
 	# KSampler:
-	workflow["3"]["inputs"]["steps"] = steps_c
-	workflow["3"]["inputs"]["seed"]  = seed_c if seed_c > -1 else random.randint(0, 2147483647)
-	workflow["3"]["inputs"]["cfg"]   = cfg_c
-	workflow["3"]["inputs"]["denoise"] = denoise
+	workflow["3"]["inputs"]["steps"]        = steps_c
+	workflow["3"]["inputs"]["seed"]         = seed_c if seed_c > -1 else random.randint(0, 2147483647)
+	workflow["3"]["inputs"]["cfg"]          = cfg_c
+	workflow["3"]["inputs"]["denoise"]      = denoise
+	workflow["3"]["inputs"]["sampler_name"] = c_sampler
+	workflow["3"]["inputs"]["scheduler"]    = c_schedule
 
 	workflow["95"]["inputs"]["compression"] = compression
 	# Handle Image Processing chain:
@@ -556,9 +663,11 @@ def process_basic_img2img(
 	workflow["77"]["inputs"]["unet_name"] = stage_b
 
 	# KSampler:
-	workflow["33"]["inputs"]["seed"]  = seed_b if seed_b > -1 else random.randint(0, 2147483647)
-	workflow["33"]["inputs"]["steps"] = steps_b
-	workflow["33"]["inputs"]["cfg"]   = cfg_b
+	workflow["33"]["inputs"]["seed"]         = seed_b if seed_b > -1 else random.randint(0, 2147483647)
+	workflow["33"]["inputs"]["steps"]        = steps_b
+	workflow["33"]["inputs"]["cfg"]          = cfg_b
+	workflow["33"]["inputs"]["sampler_name"] = b_sampler
+	workflow["33"]["inputs"]["scheduler"]    = b_schedule
 
 	# Handle Encoder/Decoder models
 	workflow["94"]["inputs"]["vae_name"] = os.path.join("cascade", "effnet_encoder.safetensors")
@@ -596,8 +705,8 @@ def process_basic_img2img(
 
 		gen_info, gen_dict = create_infotext_objects(
 			pos, neg, width, height, steps_c, workflow["3"]["inputs"]["seed"],
-			cfg_c, batch, compression, shift, steps_b, workflow["33"]["inputs"]["seed"],
-			cfg_b, stage_b, stage_c, clip_model, use_hq_stage_a, "Image to Image", markdown=True
+			cfg_c, c_sampler, c_schedule, batch, compression, shift, steps_b, workflow["33"]["inputs"]["seed"], 
+			cfg_b, b_sampler, b_schedule, stage_b, stage_c, clip_model, use_hq_stage_a, "Image to Image", markdown=True
 		)
 
 		local_paths = []
@@ -625,7 +734,8 @@ def process_basic_inpaint(
 		height, cfg_c, batch, compression, 
 		shift, latent_id, seed_b, cfg_b, steps_b, 
 		stage_b, stage_c, clip_model, backend,
-		denoise, use_hq_stage_a, save_images, save_mask
+		denoise, use_hq_stage_a, save_images, save_mask,
+		c_sampler, c_schedule, b_sampler, b_schedule
 ):
 	workflow = json.loads(workflows.get_inpaint())
 
@@ -639,6 +749,8 @@ def process_basic_inpaint(
 	workflow["3"]["inputs"]["seed"]  = seed_c if seed_c > -1 else random.randint(0, 2147483647)
 	workflow["3"]["inputs"]["cfg"]   = cfg_c
 	workflow["3"]["inputs"]["denoise"] = denoise
+	workflow["3"]["inputs"]["sampler_name"] = c_sampler
+	workflow["3"]["inputs"]["scheduler"]    = c_schedule
 
 	# Handle Image Processing chain:
 	output_width = 0
@@ -682,6 +794,8 @@ def process_basic_inpaint(
 	workflow["33"]["inputs"]["seed"]  = seed_b if seed_b > -1 else random.randint(0, 2147483647)
 	workflow["33"]["inputs"]["steps"] = steps_b
 	workflow["33"]["inputs"]["cfg"]   = cfg_b
+	workflow["33"]["inputs"]["sampler_name"] = b_sampler
+	workflow["33"]["inputs"]["scheduler"]    = b_schedule
 
 	# Handle Encoder/Decoder models
 	workflow["94"]["inputs"]["vae_name"] = os.path.join("cascade", "effnet_encoder.safetensors")
@@ -719,8 +833,8 @@ def process_basic_inpaint(
 
 		gen_info, gen_dict = create_infotext_objects(
 			pos, neg, width, height, steps_c, workflow["3"]["inputs"]["seed"],
-			cfg_c, batch, compression, shift, steps_b, workflow["33"]["inputs"]["seed"],
-			cfg_b, stage_b, stage_c, clip_model, use_hq_stage_a, "Inpainting", markdown=True
+			cfg_c, c_sampler, c_schedule, batch, compression, shift, steps_b, workflow["33"]["inputs"]["seed"],
+			cfg_b, b_sampler, b_schedule, stage_b, stage_c, clip_model, use_hq_stage_a, "Inpainting", markdown=True
 		)
 
 		local_paths = []

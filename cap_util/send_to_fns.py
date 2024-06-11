@@ -33,12 +33,16 @@ def process_params():
 		c_steps = 20
 		c_seed = -1
 		c_cfg = 4
+		c_sampler = cap_util.ksampler_samplers[0][1]
+		c_schedule = cap_util.ksampler_schedules[0][1]
 		shift = 2
 
 		# Stage B
 		b_steps = 12
 		b_seed = -1
 		b_cfg = 1.5
+		b_sampler = cap_util.ksampler_samplers[0][1]
+		b_schedule = cap_util.ksampler_schedules[0][1]
 
 		image_return = None
 
@@ -68,6 +72,10 @@ def process_params():
 			c_seed = params["c_seed"]
 		if "c_cfg" in params:
 			c_cfg = params["c_cfg"]
+		if "c_sampler" in params:
+			c_sampler = params["c_sampler"]
+		if "c_schdule" in params:
+			c_schedule = params["c_schedule"]
 		if "shift" in params:
 			shift = params["shift"]
 		
@@ -77,15 +85,19 @@ def process_params():
 			b_seed = params["b_seed"]
 		if "b_cfg" in params:
 			b_cfg = params["b_cfg"]
+		if "b_sampler" in params:
+			b_sampler = params["b_sampler"]
+		if "b_schdule" in params:
+			b_schedule = params["b_schedule"]
 		
-		return pos, neg, width, height, compression, acf, batch, batch_id, c_steps, c_seed, c_cfg, shift, b_steps, b_seed, b_cfg
+		return pos, neg, width, height, compression, acf, batch, batch_id, c_steps, c_seed, c_cfg, shift, b_steps, b_seed, b_cfg, c_sampler, c_schedule, b_sampler, b_schedule
 	else:
-		return gr.Textbox(), gr.Textbox(), gr.Slider(), gr.Slider(), gr.Slider(), gr.Checkbox(), gr.Slider(), gr.Slider(), gr.Slider(), gr.Number(), gr.Slider(), gr.Slider(), gr.Slider(), gr.Number(), gr.Slider()
+		return gr.Textbox(), gr.Textbox(), gr.Slider(), gr.Slider(), gr.Slider(), gr.Checkbox(), gr.Slider(), gr.Slider(), gr.Slider(), gr.Number(), gr.Slider(), gr.Slider(), gr.Slider(), gr.Number(), gr.Slider(), gr.Dropdown(), gr.Dropdown(), gr.Dropdown(), gr.Dropdown()
 
 def process_params_and_image():
-	pos, neg, width, height, compression, acf, batch, batch_id, c_steps, c_seed, c_cfg, shift, b_steps, b_seed, b_cfg = process_params()
+	pos, neg, width, height, compression, acf, batch, batch_id, c_steps, c_seed, c_cfg, shift, b_steps, b_seed, b_cfg, c_sampler, c_schedule, b_sampler, b_schedule = process_params()
 	image = cap_util.send_to["image"]
-	return pos, neg, width, height, compression, acf, batch, batch_id, c_steps, c_seed, c_cfg, shift, b_steps, b_seed, b_cfg, image
+	return pos, neg, width, height, compression, acf, batch, batch_id, c_steps, c_seed, c_cfg, shift, b_steps, b_seed, b_cfg, c_sampler, c_schedule, b_sampler, b_schedule, image
 
 def get_image_from_input(input_image, image_id=1):
 	if input_image is not None:
