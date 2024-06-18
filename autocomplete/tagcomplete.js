@@ -9,7 +9,7 @@ let suppressNextInput;
 const TagFile = "autocomplete/csv/resonance_furry.csv";
 const WorkingTagDelimiters = ".,/!?%^*;:{}=`~\n";
 
-const NumberFormat = new Intl.NumberFormat();
+NumberFormat = new Intl.NumberFormat();
 
 function normalize(input) {
     return input.toLowerCase().trim();
@@ -99,7 +99,15 @@ function performCompletionAndShow(target, caretRect, tag, selectionStart, select
             const label = document.createElement("span");
             label.textContent = candidate;
             const count = document.createElement("span");
-            count.textContent = NumberFormat.format(tagCompletionData.tagData[candidate].frequency);
+
+            // Nicely format the outgoing numbers
+            tag_count = tagCompletionData.tagData[candidate].frequency;
+            if (tag_count >= 1000000 || (tag_count >= 1000 && tag_count < 10000))
+                NumberFormat = Intl.NumberFormat("en", { notation: "compact", minimumFractionDigits: 1, maximumFractionDigits: 1 });
+            else
+                NumberFormat = Intl.NumberFormat("en", {notation: "compact"});
+
+            count.textContent = NumberFormat.format(tag_count);
             li.appendChild(label);
             li.appendChild(count);
             li.dataset.class = tagCompletionData.tagData[candidate].classification;

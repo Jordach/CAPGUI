@@ -35,6 +35,10 @@ body.dark #tagcomplete {
     cursor: pointer;
 }
 
+#tagcomplete ul > li:nth-child(odd) {
+	background-color: light-dark(#f7f7f7, #232a39);
+}
+
 #tagcomplete ul > li:hover {
     background-color: light-dark(#f5f6f8, #1f2937);
 }
