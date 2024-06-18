@@ -172,3 +172,4 @@ flagged/
 tmp/
 presets/
 presets/*
+autocomplete/csv/*.csv
