@@ -1,0 +1,64 @@
+#tagcomplete {
+    position: absolute;
+    inset: initial;
+    top: 0;
+    left: 0;
+    padding: 0;
+    min-width: 12rem;
+    width: max-content;
+
+    border: var(--input-border-width) solid var(--input-border-color);
+    border-radius: var(--input-radius);
+    box-shadow: var(--input-shadow);
+    background: light-dark(#ffffff, #0b0f19);
+    color: var(--body-text-color);
+    font-weight: var(--input-text-weight);
+    font-size: var(--input-text-size);
+    line-height: var(--line-sm);
+}
+
+body.dark #tagcomplete {
+    color-scheme: dark;
+}
+
+#tagcomplete ul {
+    padding: 0;
+    margin: 0;
+    list-style: none;
+}
+
+#tagcomplete ul > li {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 8px;
+    padding: 6px 8px;
+    cursor: pointer;
+}
+
+#tagcomplete ul > li:hover {
+    background-color: light-dark(#f5f6f8, #1f2937);
+}
+
+#tagcomplete ul > li[data-selected] {
+    background-color: light-dark(#e5e7eb, #374151);
+}
+
+#tagcomplete ul > li[data-class="0"] {
+    color: light-dark(dodgerblue, lightblue);
+}
+
+#tagcomplete ul > li[data-class="1"] {
+    color: light-dark(firebrick, indianred);
+}
+
+#tagcomplete ul > li[data-class="2"] {
+    color: light-dark(darkorchid, violet);
+}
+
+#tagcomplete ul > li[data-class="4"] {
+    color: light-dark(darkgreen, lightgreen);
+}
+
+#tagcomplete ul > li[data-class="5"] {
+    color: light-dark(darkorange, orange);
+}

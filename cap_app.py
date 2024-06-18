@@ -107,17 +107,10 @@ with gr.Blocks(title=f"{'[ANON MODE] ' if cap_util.gui_default_settings['ui_anon
 if not hasattr(cap_util, "gradio_response_header"):
 	cap_util.gradio_response_header = gr.routes.templates.TemplateResponse
 
-# Legacy stuff for now
-# <script type="text/javascript" src="file=autocomplete/___globals.js?{os.path.getmtime("autocomplete/___globals.js")}"></script>
-# <script type="text/javascript" src="file=autocomplete/__baseParser.js?{os.path.getmtime("autocomplete/__baseParser.js")}"></script>
-# <script type="text/javascript" src="file=autocomplete/__caretPosition.js?{os.path.getmtime("autocomplete/__caretPosition.js")}"></script>
-# <script type="text/javascript" src="file=autocomplete/__result.js?{os.path.getmtime("autocomplete/__result.js")}"></script>
-# <script type="text/javascript" src="file=autocomplete/__textAreas.js?{os.path.getmtime("autocomplete/__textAreas.js")}"></script>
-# <script type="text/javascript" src="file=autocomplete/__utils.js?{os.path.getmtime("autocomplete/__utils.js")}"></script>
-# <script type="text/javascript" src="file=autocomplete/_tag_autocomplete.js?{os.path.getmtime("autocomplete/_tag_autocomplete.js")}"></script>
-
 appended_script = f'''<script type="text/javascript" src="file=custom_js.js?{os.path.getmtime("custom_js.js")}"></script>
 <link rel="stylesheet" href="file=custom_css.css?{os.path.getmtime("custom_css.css")}">
+<script type="text/javascript" src="file=autocomplete/tagcomplete.js?{os.path.getmtime("autocomplete/tagcomplete.js")}"></script>
+<link rel="stylesheet" href="file=autocomplete/tagcomplete.css?{os.path.getmtime("autocomplete/tagcomplete.css")}">
 '''
 
 def new_resp(*args, **kwargs):

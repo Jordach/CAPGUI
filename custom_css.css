@@ -34,7 +34,6 @@ div.gradio-container {
 
 #tab_txt2img, #tab_img2img, #tab_inpaint {
 	z-index: 0 !important;
-	display: block !important;
 }
 
 #promptbar {
