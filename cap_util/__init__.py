@@ -13,6 +13,41 @@ send_to = {}
 # Memory for load_last_generation
 last_generation = {}
 
+ac_keymap_default = """\
+{
+    "MoveUp": "ArrowUp",
+    "MoveDown": "ArrowDown",
+    "JumpUp": "PageUp",
+    "JumpDown": "PageDown",
+    "JumpToStart": "Home",
+    "JumpToEnd": "End",
+    "ChooseSelected": "Enter",
+    "ChooseFirstOrSelected": "Tab",
+    "Close": "Escape"
+}"""
+ac_color_default = """\
+{
+    "resonance_anime": {
+        "-1": ["red", "maroon"],
+        "0": ["lightblue", "dodgerblue"],
+        "1": ["indianred", "firebrick"],
+        "3": ["violet", "darkorchid"],
+        "4": ["lightgreen", "darkgreen"],
+        "5": ["orange", "darkorange"]
+    },
+    "resonance_furry": {
+        "-1": ["red", "maroon"],
+        "0": ["lightblue", "dodgerblue"],
+        "1": ["gold", "goldenrod"],
+        "3": ["violet", "darkorchid"],
+        "4": ["lightgreen", "darkgreen"],
+        "5": ["tomato", "darksalmon"],
+        "6": ["red", "maroon"],
+        "7": ["whitesmoke", "black"],
+        "8": ["seagreen", "darkseagreen"]
+    }
+}"""
+
 gui_default_settings = {
 	# Path settings for ComfyUI
 	"comfy_address": "127.0.0.1",
@@ -81,6 +116,24 @@ gui_default_settings = {
 	"gen_b_denoise_max": 1.0,
 	"gen_b_denoise_step": 0.05,
 
+	# Tag Auto Complete:
+	"tac_tagFile": "dummy.csv",
+	"tac_active": True,
+	"tac_slidingPopup": True,
+	"tac_maxResults": 5,
+	"tac_showAllResults": False,
+	"tac_resultStepLength": 100,
+	"tac_delayTime": 100,
+	"tac_replaceUnderscores": True,
+	"tac_escapeParentheses": True,
+	"tac_appendComma": True,
+	"tac_appendSpace": True,
+	"tac_alwaysSpaceAtEnd": True,
+	"tac_alias.searchByAlias": True,
+	"tac_alias.onlyShowAlias": False,
+	"tac_keymap": ac_keymap_default,
+	"tac_colormap": ac_color_default,
+
 	# UI and functionality:
 	"ui_anonymous_mode": False,
 	"ui_img2img_include_original": False,
@@ -139,7 +192,7 @@ ksampler_presets_stage_c["builtin_basic"] = {
 }
 
 ksampler_presets_stage_c["builtin_quality"] = {
-	"sampler": "dpmpp_2m_sde",
+	"sampler": "dpmpp_sde",
 	"scheduler": "simple",
 	"steps": 20,
 	"cfg": 4,

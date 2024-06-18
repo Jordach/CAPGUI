@@ -18,6 +18,140 @@ function get_tab_window() {
 	return gradioApp().querySelector('.tabs > .tabitem[id^=tab_]:not([style*="display: none"])');
 }
 
+var uiUpdateCallbacks = [];
+var uiAfterUpdateCallbacks = [];
+var uiLoadedCallbacks = [];
+var uiTabChangeCallbacks = [];
+var optionsChangedCallbacks = [];
+var uiAfterUpdateTimeout = null;
+var uiCurrentTab = null;
+
+/**
+ * Register callback to be called at each UI update.
+ * The callback receives an array of MutationRecords as an argument.
+ */
+function onUiUpdate(callback) {
+	uiUpdateCallbacks.push(callback);
+}
+
+/**
+ * Register callback to be called soon after UI updates.
+ * The callback receives no arguments.
+ *
+ * This is preferred over `onUiUpdate` if you don't need
+ * access to the MutationRecords, as your function will
+ * not be called quite as often.
+ */
+function onAfterUiUpdate(callback) {
+	uiAfterUpdateCallbacks.push(callback);
+}
+
+/**
+ * Register callback to be called when the UI is loaded.
+ * The callback receives no arguments.
+ */
+function onUiLoaded(callback) {
+	uiLoadedCallbacks.push(callback);
+}
+
+/**
+ * Register callback to be called when the UI tab is changed.
+ * The callback receives no arguments.
+ */
+function onUiTabChange(callback) {
+	uiTabChangeCallbacks.push(callback);
+}
+
+/**
+ * Register callback to be called when the options are changed.
+ * The callback receives no arguments.
+ * @param callback
+ */
+function onOptionsChanged(callback) {
+	optionsChangedCallbacks.push(callback);
+}
+
+function executeCallbacks(queue, arg) {
+	for (const callback of queue) {
+		try {
+			callback(arg);
+		} catch (e) {
+			console.error("error running callback", callback, ":", e);
+		}
+	}
+}
+
+/**
+ * Schedule the execution of the callbacks registered with onAfterUiUpdate.
+ * The callbacks are executed after a short while, unless another call to this function
+ * is made before that time. IOW, the callbacks are executed only once, even
+ * when there are multiple mutations observed.
+ */
+function scheduleAfterUiUpdateCallbacks() {
+	clearTimeout(uiAfterUpdateTimeout);
+	uiAfterUpdateTimeout = setTimeout(function() {
+		executeCallbacks(uiAfterUpdateCallbacks);
+	}, 200);
+}
+
+var executedOnLoaded = false;
+
+document.addEventListener("DOMContentLoaded", function() {
+	var mutationObserver = new MutationObserver(function(m) {
+		if (!executedOnLoaded && gradioApp().querySelector('#txt2img_prompt')) {
+			executedOnLoaded = true;
+			executeCallbacks(uiLoadedCallbacks);
+		}
+
+		executeCallbacks(uiUpdateCallbacks, m);
+		scheduleAfterUiUpdateCallbacks();
+		const newTab = get_uiCurrentTab();
+		if (newTab && (newTab !== uiCurrentTab)) {
+			uiCurrentTab = newTab;
+			executeCallbacks(uiTabChangeCallbacks);
+		}
+	});
+	mutationObserver.observe(gradioApp(), {childList: true, subtree: true});
+});
+
+// Ported the javascript that handles Auto style settings
+// CAPGUI uses a different methodology, but, the idea is the same
+var opts = {};
+onAfterUiUpdate(function() {
+	if (Object.keys(opts).length != 0) return;
+
+	var json_elem = gradioApp().getElementById('settings_json');
+	if (json_elem == null) return;
+
+	var textarea = json_elem.querySelector('textarea');
+	var jsdata = textarea.value;
+	opts = JSON.parse(jsdata);
+	console.log("Core settings dictionary updated by Gradio.");
+
+	executeCallbacks(optionsChangedCallbacks); /*global optionsChangedCallbacks*/
+
+	Object.defineProperty(textarea, 'value', {
+		set: function(newValue) {
+			var valueProp = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value');
+			var oldValue = valueProp.get.call(textarea);
+			valueProp.set.call(textarea, newValue);
+
+			if (oldValue != newValue) {
+				opts = JSON.parse(textarea.value);
+			}
+
+			executeCallbacks(optionsChangedCallbacks);
+		},
+		get: function() {
+			var valueProp = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value');
+			return valueProp.get.call(textarea);
+		}
+	});
+
+	json_elem.parentElement.style.display = "none";
+});
+
+// Add in the ctrl/cmd + enter shortcut to generate
 document.addEventListener('keydown', function(e) {
 	const isEnter = e.key === 'Enter' || e.keyCode === 13;
 	const isCtrlKey = e.metaKey || e.ctrlKey;

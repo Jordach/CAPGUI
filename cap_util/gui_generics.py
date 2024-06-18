@@ -53,10 +53,10 @@ def save_preset_settings_b(sampler, scheduler, steps, cfg, filename, desc):
 # Components that are shared or common to multiple tabs
 # these usually do not come with functions
 def get_pos_prompt_box():
-	return gr.Textbox(label=None, show_label=False, placeholder="Enter a prompt here.", lines=3, elem_id="pos_prompt", elem_classes=["prompt"])
+	return gr.Textbox(label=None, show_label=False, placeholder="Enter a prompt here.", lines=3, elem_id="pos_prompt", elem_classes=["prompt"], container=False)
 
 def get_neg_prompt_box():
-	return gr.Textbox(label=None, show_label=False, placeholder="Enter a negative prompt here.", lines=3, elem_id="neg_prompt", elem_classes=["prompt"])
+	return gr.Textbox(label=None, show_label=False, placeholder="Enter a negative prompt here.", lines=3, elem_id="neg_prompt", elem_classes=["prompt"], container=False)
 
 def get_generate_button(local_ctx):
 	return gr.Button("Generate!", variant="primary", elem_id=f"generate_{local_ctx['__tab_name__']}")

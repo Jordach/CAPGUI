@@ -11,24 +11,39 @@ div.gradio-container {
     object-fit: scale-down !important;
 }
 
-@media screen {
-    #txt2img_gallery, #img2img_gallery, #inpaint_gallery {
-        min-height: 70vh !important;
-    }
-    #tools_image {
-        height: auto !important;
-        object-fit: scale-down !important;
-    }
-    #tools_image > button > div > img {
-        max-height: 75vh !important;
-        width: 100% !important;
-        object-fit: scale-down !important;
-    }
-    #inpaint_canvas div[data-testid=image] div[class*="wrap"] div[class*="stage-wrap"] canvas, #img2img_canvas div[data-testid=image] div[class*="wrap"] div[class*="stage-wrap"] canvas {
-        max-width: 100% !important;
-        max-height: 97.5vh !important;
-        width: 100% !important;
-    }
+
+#txt2img_gallery, #img2img_gallery, #inpaint_gallery {
+	min-height: 70vh !important;
+	display: block !important;
+	z-index: 2;
+}
+#tools_image {
+	height: auto !important;
+	object-fit: scale-down !important;
+}
+#tools_image > button > div > img {
+	max-height: 75vh !important;
+	width: 100% !important;
+	object-fit: scale-down !important;
+}
+#inpaint_canvas div[data-testid=image] div[class*="wrap"] div[class*="stage-wrap"] canvas, #img2img_canvas div[data-testid=image] div[class*="wrap"] div[class*="stage-wrap"] canvas {
+	max-width: 100% !important;
+	max-height: 97.5vh !important;
+	width: 100% !important;
+}
+
+#tab_txt2img, #tab_img2img, #tab_inpaint {
+	z-index: 0 !important;
+	display: block !important;
+}
+
+#promptbar {
+	z-index: 1 !important;
+}
+
+#pos_prompt > label > textarea , #neg_prompt > label > textarea {
+	z-index: 2 !important;
+	display: block !important;
 }
 
 #prose {
