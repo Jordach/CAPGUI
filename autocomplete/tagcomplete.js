@@ -140,7 +140,7 @@ function performCompletionAndShow(target, caretRect, tag, selectionStart, select
             li.appendChild(count);
             li.dataset.class = candidate.category;
             li.addEventListener("click", () => {
-                insertSelectedTag(target, candidate.tag, selectionStart, selectionEnd);
+                insertSelectedTag(target, candidate, selectionStart, selectionEnd);
                 hide();
             });
             ul.appendChild(li);
