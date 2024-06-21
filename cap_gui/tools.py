@@ -15,7 +15,11 @@ def tools_tab(global_ctx, local_ctx):
 			with gr.Column():
 				with gr.Accordion(label="Generation Info:"):
 					local_ctx["image_infotext"] = gr.Markdown("", line_breaks=True, label="Generation Info:")
-					local_ctx["send_to_dropdown"] = gui_generics.get_send_to_dropdown(global_ctx)
+					with gr.Row():
+						with gr.Column():
+							local_ctx["send_to_dropdown"] = gui_generics.get_send_to_dropdown(global_ctx)
+						with gr.Column():
+							local_ctx["send_to_randomise_seed"] = gr.Checkbox(False, label="Randomise Seeds?")
 					local_ctx["send_to_button"] = gui_generics.get_send_to_button()
 					local_ctx["image_json"] = gr.Markdown("", visible=False, label="Generation JSON:")
 
@@ -27,6 +31,9 @@ def handle_image_upload(file):
 	infotext, infodict = info_extractor.read_infodict_from_image(image)
 	return infotext, json.dumps(infodict), image.copy()
 
+def send_to_tab_special(dropdown, image_json, image, random_seeds):
+	return send_to_fns.send_to_tab(dropdown, image_json, image, randomise_seeds=random_seeds)
+
 def tools_tab_post_hook(global_ctx, local_ctx):
 	local_ctx["image_reader"].upload(
 		handle_image_upload,
@@ -35,7 +42,7 @@ def tools_tab_post_hook(global_ctx, local_ctx):
 	)
 	
 	local_ctx["send_to_button"].click(
-		send_to_fns.send_to_tab,
-		inputs=[local_ctx["send_to_dropdown"], local_ctx["image_json"], local_ctx["image_viewer"]],
+		send_to_tab_special,
+		inputs=[local_ctx["send_to_dropdown"], local_ctx["image_json"], local_ctx["image_viewer"], local_ctx["send_to_randomise_seed"]],
 		outputs=[global_ctx["txt2img"]["send_to_target"], global_ctx["img2img"]["send_to_target"], global_ctx["inpaint"]["send_to_target"]]
 	)

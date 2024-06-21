@@ -33,6 +33,7 @@ def process_params():
 		c_steps = 20
 		c_seed = -1
 		c_cfg = 4
+		c_rescale = 0
 		c_sampler = cap_util.ksampler_samplers[0][1]
 		c_schedule = cap_util.ksampler_schedules[0][1]
 		shift = 2
@@ -72,6 +73,8 @@ def process_params():
 			c_seed = params["c_seed"]
 		if "c_cfg" in params:
 			c_cfg = params["c_cfg"]
+		if "c_rescale" in params:
+			c_rescale = params["c_rescale"]
 		if "c_sampler" in params:
 			c_sampler = params["c_sampler"]
 		if "c_schdule" in params:
@@ -90,14 +93,14 @@ def process_params():
 		if "b_schdule" in params:
 			b_schedule = params["b_schedule"]
 		
-		return pos, neg, width, height, compression, acf, batch, batch_id, c_steps, c_seed, c_cfg, shift, b_steps, b_seed, b_cfg, c_sampler, c_schedule, b_sampler, b_schedule
+		return pos, neg, width, height, compression, acf, batch, batch_id, c_steps, c_seed, c_cfg, shift, b_steps, b_seed, b_cfg, c_sampler, c_schedule, b_sampler, b_schedule, c_rescale
 	else:
-		return gr.Textbox(), gr.Textbox(), gr.Slider(), gr.Slider(), gr.Slider(), gr.Checkbox(), gr.Slider(), gr.Slider(), gr.Slider(), gr.Number(), gr.Slider(), gr.Slider(), gr.Slider(), gr.Number(), gr.Slider(), gr.Dropdown(), gr.Dropdown(), gr.Dropdown(), gr.Dropdown()
+		return gr.Textbox(), gr.Textbox(), gr.Slider(), gr.Slider(), gr.Slider(), gr.Checkbox(), gr.Slider(), gr.Slider(), gr.Slider(), gr.Number(), gr.Slider(), gr.Slider(), gr.Slider(), gr.Number(), gr.Slider(), gr.Dropdown(), gr.Dropdown(), gr.Dropdown(), gr.Dropdown(), gr.Slider()
 
 def process_params_and_image():
-	pos, neg, width, height, compression, acf, batch, batch_id, c_steps, c_seed, c_cfg, shift, b_steps, b_seed, b_cfg, c_sampler, c_schedule, b_sampler, b_schedule = process_params()
+	pos, neg, width, height, compression, acf, batch, batch_id, c_steps, c_seed, c_cfg, shift, b_steps, b_seed, b_cfg, c_sampler, c_schedule, b_sampler, b_schedule, c_rescale = process_params()
 	image = cap_util.send_to["image"]
-	return pos, neg, width, height, compression, acf, batch, batch_id, c_steps, c_seed, c_cfg, shift, b_steps, b_seed, b_cfg, c_sampler, c_schedule, b_sampler, b_schedule, image
+	return pos, neg, width, height, compression, acf, batch, batch_id, c_steps, c_seed, c_cfg, shift, b_steps, b_seed, b_cfg, c_sampler, c_schedule, b_sampler, b_schedule, c_rescale, image
 
 def get_image_from_input(input_image, image_id=1):
 	if input_image is not None:
@@ -144,7 +147,7 @@ def get_image_from_input(input_image, image_id=1):
 # so that it triggers element updates through a callback function
 # defined in post hook functions.
 def send_to_tab(
-	target_tab, infodict, input_image=None, image_id=1, 
+	target_tab, infodict, input_image=None, image_id=1, randomise_seeds=True, 
 ):
 	t2i = gr.Textbox()
 	i2i = gr.Textbox()
@@ -164,6 +167,9 @@ def send_to_tab(
 	cap_util.send_to = {}
 	if infodict != "{}":
 		cap_util.send_to["params"] = json.loads(infodict)
+		if randomise_seeds:
+			cap_util.send_to["params"]["c_seed"] = -1
+			cap_util.send_to["params"]["b_seed"] = -1
 
 	cap_util.send_to["image"] = get_image_from_input(input_image, image_id)
 

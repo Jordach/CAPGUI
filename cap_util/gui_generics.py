@@ -109,7 +109,15 @@ def get_generation_settings_column(global_ctx, local_ctx):
 					maximum=cap_util.gui_default_settings["gen_c_cfg_max"],
 					value=cap_util.gui_default_settings["gen_c_cfg"],
 					step=cap_util.gui_default_settings["gen_c_cfg_step"],
-					label="Base CFG:", interactive=True, scale=5
+					label="CFG:", interactive=True, scale=5
+				)
+				local_ctx["stage_c_rescale"] = gr.Slider(
+					minimum=cap_util.gui_default_settings["gen_c_rescale_min"],
+					maximum=cap_util.gui_default_settings["gen_c_rescale_max"],
+					value=cap_util.gui_default_settings["gen_c_rescale"],
+					step=cap_util.gui_default_settings["gen_c_rescale_step"],
+					label="CFG Rescale:", interactive=True, scale=5,
+					info="How much to rescale CFG by during sampling. Values over 0.8 tend to cause issues."
 				)
 				local_ctx["stage_c_batch"] = gr.Slider(
 					minimum=cap_util.gui_default_settings["gen_batch_size_min"],

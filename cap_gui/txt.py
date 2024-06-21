@@ -22,7 +22,7 @@ def process_generate_button(
 	b_seed, b_cfg, b_steps, stage_b, stage_c,
 	clip, backend, use_hq_stage_a, save_images,
 	xy_x_string, xy_x_dropdown, xy_x_type, xy_y_string, xy_y_dropdown, xy_y_type,
-	c_sampler, c_scheduler, b_sampler, b_scheduler
+	c_sampler, c_scheduler, b_sampler, b_scheduler, c_rescale
 ):
 	if xy_x_type != 'None' or xy_y_type != 'None':
 		return gui_xy.process_xy_images(
@@ -31,7 +31,7 @@ def process_generate_button(
 			b_seed, b_cfg, b_steps, stage_b, stage_c,
 			clip, backend, use_hq_stage_a, save_images,
 			xy_x_string, xy_x_dropdown, xy_x_type, xy_y_string, xy_y_dropdown, xy_y_type,
-			c_sampler, c_scheduler, b_sampler, b_scheduler
+			c_sampler, c_scheduler, b_sampler, b_scheduler, c_rescale,
 		)
 	else:
 		return cap_util.process_basic_txt2img(
@@ -39,7 +39,8 @@ def process_generate_button(
 			c_cfg, batch, compression, shift, latent_id,
 			b_seed, b_cfg, b_steps, stage_b, stage_c,
 			clip, backend, use_hq_stage_a, save_images,
-			c_sampler, c_scheduler, b_sampler, b_scheduler
+			c_sampler, c_scheduler, b_sampler, b_scheduler,
+			c_rescale
 		)
 
 # This sets up the functions like the generate button after elements have been initialised
@@ -54,7 +55,8 @@ def txt2img_tab_post_hook(global_ctx, local_ctx):
 			global_ctx["topbar"]["stage_b"], global_ctx["topbar"]["stage_c"], global_ctx["topbar"]["clip"], global_ctx["topbar"]["backend"],
 			local_ctx["use_stage_a_hq"],      local_ctx["stage_c_save_images"],
 			local_ctx["xy_x_string"],local_ctx["xy_x_dropdown"],local_ctx["xy_x_type"],local_ctx["xy_y_string"],local_ctx["xy_y_dropdown"],local_ctx["xy_y_type"],
-			local_ctx["stage_c_sampler"], local_ctx["stage_c_scheduler"], local_ctx["stage_b_sampler"], local_ctx["stage_b_scheduler"]
+			local_ctx["stage_c_sampler"], local_ctx["stage_c_scheduler"], local_ctx["stage_b_sampler"], local_ctx["stage_b_scheduler"],
+			local_ctx["stage_c_rescale"]
 		],
 		outputs=[local_ctx["gallery"], local_ctx["gen_info_box"], local_ctx["gen_json"]],
 		show_progress="minimal", 
@@ -74,6 +76,7 @@ def txt2img_tab_post_hook(global_ctx, local_ctx):
 			local_ctx["stage_c_compression"], local_ctx["stage_c_auto_compressor"], local_ctx["stage_c_batch"], local_ctx["stage_c_single_latent"],
 			local_ctx["stage_c_steps"], local_ctx["stage_c_seed"], local_ctx["stage_c_cfg"], local_ctx["stage_c_shift"],
 			local_ctx["stage_b_steps"], local_ctx["stage_b_seed"], local_ctx["stage_b_cfg"],
-			local_ctx["stage_c_sampler"], local_ctx["stage_c_scheduler"], local_ctx["stage_b_sampler"], local_ctx["stage_b_scheduler"]
+			local_ctx["stage_c_sampler"], local_ctx["stage_c_scheduler"], local_ctx["stage_b_sampler"], local_ctx["stage_b_scheduler"],
+			local_ctx["stage_c_rescale"]
 		], show_progress="minimal", trigger_mode="once", queue=False,
 	)

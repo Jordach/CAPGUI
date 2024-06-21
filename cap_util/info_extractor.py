@@ -39,7 +39,7 @@ def handle_auto1111(params):
 			prompt_index = [params.index("\nNegative prompt:"), params.index("\nSteps:")]
 			neg = params[prompt_index[0] + 1 + len("Negative prompt: "):prompt_index[-1]]
 		else:
-			index = [params.index("\nSteps:")]
+			prompt_index = [params.index("\nSteps:")]
 			neg = ""
 
 		pos = params[:prompt_index[0]]
@@ -50,7 +50,7 @@ def handle_auto1111(params):
 			prompt_index = [params.index("\nNegative prompt:")]
 			neg = params[prompt_index[0] + 1 + len("Negative prompt: "):]
 		else:
-			index = [len(params)]
+			prompt_index = [len(params)]
 			neg = ""
 		
 		pos = params[:prompt_index[0]]
@@ -279,9 +279,11 @@ def read_infodict_from_image(image):
 				infodict["b_sampler"] = "euler_ancestral"
 			if "b_schedule" not in infodict:
 				infodict["b_schedule"] = "simple"
+			if "c_rescale" not in infodict:
+				infodict["c_rescale"] = 0
 			infotext = cap_util.create_infotext_from_dict(infodict, markdown=True)
 			return infotext, infodict
-		except:
+		except Exception as e1:
 			try:
 				prompt, negative = handle_auto1111(alpha_data)
 				if prompt != "" or negative != "":
@@ -293,7 +295,7 @@ def read_infodict_from_image(image):
 					infodict = {}
 					return infotext, infodict
 			# Handle older CAPGUI stealth PNG data
-			except:
+			except Exception as e2:
 				infotext = alpha_data
 				infodict = {}
 				return infotext, infodict

@@ -51,10 +51,15 @@ gui_default_settings = {
 	"gen_c_shift_max": 12.0,
 	"gen_c_shift_step": 0.01,
 
-	"gen_c_cfg": 4.0,
+	"gen_c_cfg": 7.0,
 	"gen_c_cfg_min": 1.0,
 	"gen_c_cfg_max": 15.0,
 	"gen_c_cfg_step": 0.05,
+
+	"gen_c_rescale": 0,
+	"gen_c_rescale_min": 0, 
+	"gen_c_rescale_max": 1.0,
+	"gen_c_rescale_step": 0.01,
 	
 	"gen_c_denoise": 1.0,
 	"gen_c_denoise_min": 0.0,
@@ -417,6 +422,8 @@ def create_infotext_from_dict(info_dict, markdown=False):
 		infotext += f"Base Seed: {info_dict['c_seed']}\n"
 	if "c_cfg" in info_dict:
 		infotext += f"Base CFG: {info_dict['c_cfg']}\n"
+	if "c_rescale" in info_dict:
+		infotext += f"Base CFG Rescale: {info_dict['c_rescale']}\n"
 	if "shift" in info_dict:
 		infotext += f"Base Shift: {info_dict['shift']}\n"
 	if "c_sampler" in info_dict:
@@ -447,7 +454,7 @@ def create_infotext_from_dict(info_dict, markdown=False):
 
 def create_infotext_objects(
 	pos=None, neg=None, width=None, height=None, 
-	c_steps=None, c_seed=None, c_cfg=None, c_sampler=None, c_schedule=None,
+	c_steps=None, c_seed=None, c_cfg=None, c_rescale=None, c_sampler=None, c_schedule=None,
 	batch=None, compression=None, shift=None, b_steps=None, b_seed=None,
 	b_cfg=None, b_sampler=None, b_schedule=None,
 	stage_b=None, stage_c=None, clip=None, use_hq=None,
@@ -482,6 +489,9 @@ def create_infotext_objects(
 	if c_cfg is not None:
 		infotext += f"Base CFG: {c_cfg}\n"
 		info_dict["c_cfg"] = c_cfg
+	if c_rescale is not None:
+		infotext += f"Base CFG Rescale: {c_rescale}\n"
+		info_dict["c_rescale"] = c_rescale
 	if c_sampler is not None:
 		infotext += f"Base Sampler: {c_sampler}\n"
 		info_dict["c_sampler"] = c_sampler
@@ -562,7 +572,8 @@ def process_basic_txt2img(
 		cfg_c, batch, compression, shift, latent_id, 
 		seed_b, cfg_b, steps_b, stage_b, 
 		stage_c, clip_model, backend, use_hq_stage_a,
-		save_images, c_sampler, c_schedule, b_sampler, b_schedule
+		save_images, c_sampler, c_schedule, b_sampler, b_schedule,
+		c_rescale,
 ):
 	global gui_default_settings
 	global ws
@@ -579,6 +590,7 @@ def process_basic_txt2img(
 	workflow["3"]["inputs"]["steps"]        = steps_c
 	workflow["3"]["inputs"]["seed"]         = seed_c if seed_c > -1 else random.randint(0, 2147483647)
 	workflow["3"]["inputs"]["cfg"]          = cfg_c
+	workflow["99"]["inputs"]["multiplier"]  = c_rescale
 	workflow["3"]["inputs"]["sampler_name"] = c_sampler
 	workflow["3"]["inputs"]["scheduler"]    = c_schedule
 
@@ -634,7 +646,7 @@ def process_basic_txt2img(
 		
 		gen_info, gen_dict = create_infotext_objects(
 			pos, neg, width, height, steps_c, workflow["3"]["inputs"]["seed"],
-			cfg_c, c_sampler, c_schedule, batch, compression, shift, steps_b, workflow["33"]["inputs"]["seed"],
+			cfg_c, c_rescale, c_sampler, c_schedule, batch, compression, shift, steps_b, workflow["33"]["inputs"]["seed"],
 			cfg_b, b_sampler, b_schedule, stage_b, stage_c, clip_model, use_hq_stage_a, "Text to Image", markdown=True
 		)
 
@@ -662,7 +674,8 @@ def process_basic_img2img(
 		seed_b, cfg_b, steps_b, 
 		stage_b, stage_c, clip_model, backend,
 		denoise, use_hq_stage_a, save_images, 
-		c_sampler, c_schedule, b_sampler, b_schedule
+		c_sampler, c_schedule, b_sampler, b_schedule,
+		c_rescale,
 ):
 	workflow = json.loads(workflows.get_basic_img2img())
 
@@ -675,6 +688,7 @@ def process_basic_img2img(
 	workflow["3"]["inputs"]["steps"]        = steps_c
 	workflow["3"]["inputs"]["seed"]         = seed_c if seed_c > -1 else random.randint(0, 2147483647)
 	workflow["3"]["inputs"]["cfg"]          = cfg_c
+	workflow["107"]["inputs"]["multiplier"] = c_rescale
 	workflow["3"]["inputs"]["denoise"]      = denoise
 	workflow["3"]["inputs"]["sampler_name"] = c_sampler
 	workflow["3"]["inputs"]["scheduler"]    = c_schedule
@@ -753,7 +767,7 @@ def process_basic_img2img(
 
 		gen_info, gen_dict = create_infotext_objects(
 			pos, neg, width, height, steps_c, workflow["3"]["inputs"]["seed"],
-			cfg_c, c_sampler, c_schedule, batch, compression, shift, steps_b, workflow["33"]["inputs"]["seed"], 
+			cfg_c, c_rescale, c_sampler, c_schedule, batch, compression, shift, steps_b, workflow["33"]["inputs"]["seed"], 
 			cfg_b, b_sampler, b_schedule, stage_b, stage_c, clip_model, use_hq_stage_a, "Image to Image", markdown=True
 		)
 
@@ -783,7 +797,8 @@ def process_basic_inpaint(
 		shift, latent_id, seed_b, cfg_b, steps_b, 
 		stage_b, stage_c, clip_model, backend,
 		denoise, use_hq_stage_a, save_images, save_mask,
-		c_sampler, c_schedule, b_sampler, b_schedule
+		c_sampler, c_schedule, b_sampler, b_schedule,
+		c_rescale,
 ):
 	workflow = json.loads(workflows.get_inpaint())
 
@@ -793,10 +808,11 @@ def process_basic_inpaint(
 	workflow["106"]["inputs"]["text"] = neg
 
 	# KSampler:
-	workflow["3"]["inputs"]["steps"] = steps_c
-	workflow["3"]["inputs"]["seed"]  = seed_c if seed_c > -1 else random.randint(0, 2147483647)
-	workflow["3"]["inputs"]["cfg"]   = cfg_c
-	workflow["3"]["inputs"]["denoise"] = denoise
+	workflow["3"]["inputs"]["steps"]        = steps_c
+	workflow["3"]["inputs"]["seed"]         = seed_c if seed_c > -1 else random.randint(0, 2147483647)
+	workflow["3"]["inputs"]["cfg"]          = cfg_c
+	workflow["131"]["inputs"]["multiplier"] = c_rescale
+	workflow["3"]["inputs"]["denoise"]      = denoise
 	workflow["3"]["inputs"]["sampler_name"] = c_sampler
 	workflow["3"]["inputs"]["scheduler"]    = c_schedule
 
@@ -881,7 +897,7 @@ def process_basic_inpaint(
 
 		gen_info, gen_dict = create_infotext_objects(
 			pos, neg, width, height, steps_c, workflow["3"]["inputs"]["seed"],
-			cfg_c, c_sampler, c_schedule, batch, compression, shift, steps_b, workflow["33"]["inputs"]["seed"],
+			cfg_c, c_rescale, c_sampler, c_schedule, batch, compression, shift, steps_b, workflow["33"]["inputs"]["seed"],
 			cfg_b, b_sampler, b_schedule, stage_b, stage_c, clip_model, use_hq_stage_a, "Inpainting", markdown=True
 		)
 
