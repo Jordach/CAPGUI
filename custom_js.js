@@ -170,7 +170,7 @@ function gen_forever() {
 	const generateButton = get_tab_window().querySelector('#promptbar > #buttons > button[id^=generate_]');
 	var generateForever = get_tab_window().querySelector('#promptbar > #buttons > div [id^=gen_forever_] > label > input[type="checkbox"]');
 	// console.log(generateForever.checked)
-	if (generateForever.checked) {
+	if (generateForever && generateForever.checked) {
 		generateButton.click();
 	}
 }
