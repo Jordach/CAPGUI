@@ -3,35 +3,20 @@
 import gradio as gr
 import json
 import cap_util
+import random
 
-# Add keys here for the browser to be entirely unaware of
-# This means that misbehaving clients cannot peer into other memory secrets from JavaScript
-banned_settings_values = {
-	"cap_login_expiry": True,
-	"cap_login_token": True,
-	"cap_use_cap_workers": True,
-	"comfy_address": True,
-	"comfy_path": True,
-	"comfy_port": True,
-	"comfy_uuid": True,
-	"ui_anonymous_mode": True
-}
-
-def create_settings_json_for_browser():
-	keys = cap_util.gui_default_settings.keys()
-	output_dict = {}
-	for key in keys:
-		if key in banned_settings_values:
-			continue
-		output_dict[key] = cap_util.gui_default_settings[key]
-
-	return json.dumps(output_dict)
+def get_backend_dropdown():
+	dropdown = gr.Dropdown(["ComfyUI", "CAP"], label="Generation Backend:", value="ComfyUI", filterable=False, scale=1)
+	return dropdown
 
 def settings_tab(global_ctx, local_ctx):
-	with gr.Accordion("Tag Auto Complete:"):
+	local_ctx["settings_save_changes"] = gr.Button("Save Changes")
+	with gr.Accordion("Tag Auto Complete:", open=False):
 		gr.Markdown("soon")
-	with gr.Accordion("GUI Startup Defaults:"):
+	with gr.Accordion("GUI Startup Defaults:", open=False):
 		gr.Markdown("soon")
-	gr.Markdown("soon")
-	local_ctx["settings_json"] = gr.Textbox(create_settings_json_for_browser(), elem_id="settings_json", visible=True)
-	pass
+	with gr.Accordion("Generation Backend:", open=False):
+		global_ctx["topbar"]["backend"] = get_backend_dropdown()
+	local_ctx["settings_json"] = gr.Textbox(cap_util.create_settings_json_for_browser(), elem_id="settings_json", visible=False)
+
+	local_ctx["settings_save_changes"].click(cap_util.create_settings_json_for_browser, outputs=[local_ctx["settings_json"]]).then()

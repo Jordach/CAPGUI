@@ -126,7 +126,6 @@ onAfterUiUpdate(function() {
 	var textarea = json_elem.querySelector('textarea');
 	var jsdata = textarea.value;
 	opts = JSON.parse(jsdata);
-	console.log("Core settings dictionary updated by Gradio.");
 
 	executeCallbacks(optionsChangedCallbacks); /*global optionsChangedCallbacks*/
 
@@ -139,6 +138,7 @@ onAfterUiUpdate(function() {
 			if (oldValue != newValue) {
 				opts = JSON.parse(textarea.value);
 			}
+			console.log("Core settings dictionary updated by Gradio.");
 
 			executeCallbacks(optionsChangedCallbacks);
 		},

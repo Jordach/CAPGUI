@@ -13,41 +13,6 @@ send_to = {}
 # Memory for load_last_generation
 last_generation = {}
 
-ac_keymap_default = """\
-{
-    "MoveUp": "ArrowUp",
-    "MoveDown": "ArrowDown",
-    "JumpUp": "PageUp",
-    "JumpDown": "PageDown",
-    "JumpToStart": "Home",
-    "JumpToEnd": "End",
-    "ChooseSelected": "Enter",
-    "ChooseFirstOrSelected": "Tab",
-    "Close": "Escape"
-}"""
-ac_color_default = """\
-{
-    "resonance_anime": {
-        "-1": ["red", "maroon"],
-        "0": ["lightblue", "dodgerblue"],
-        "1": ["indianred", "firebrick"],
-        "3": ["violet", "darkorchid"],
-        "4": ["lightgreen", "darkgreen"],
-        "5": ["orange", "darkorange"]
-    },
-    "resonance_furry": {
-        "-1": ["red", "maroon"],
-        "0": ["lightblue", "dodgerblue"],
-        "1": ["gold", "goldenrod"],
-        "3": ["violet", "darkorchid"],
-        "4": ["lightgreen", "darkgreen"],
-        "5": ["tomato", "darksalmon"],
-        "6": ["red", "maroon"],
-        "7": ["whitesmoke", "black"],
-        "8": ["seagreen", "darkseagreen"]
-    }
-}"""
-
 gui_default_settings = {
 	# Path settings for ComfyUI
 	"comfy_address": "127.0.0.1",
@@ -117,27 +82,44 @@ gui_default_settings = {
 	"gen_b_denoise_step": 0.05,
 
 	# Tag Auto Complete:
-	"tac_tagFile": "dummy.csv",
+	"tac_tagFile": "not_selected.csv",
 	"tac_active": True,
-	"tac_slidingPopup": True,
 	"tac_maxResults": 5,
-	"tac_showAllResults": False,
-	"tac_resultStepLength": 100,
-	"tac_delayTime": 100,
 	"tac_replaceUnderscores": True,
 	"tac_escapeParentheses": True,
 	"tac_appendComma": True,
 	"tac_appendSpace": True,
-	"tac_alwaysSpaceAtEnd": True,
 	"tac_alias.searchByAlias": True,
 	"tac_alias.onlyShowAlias": False,
-	"tac_keymap": ac_keymap_default,
-	"tac_colormap": ac_color_default,
 
 	# UI and functionality:
 	"ui_anonymous_mode": False,
 	"ui_img2img_include_original": False,
 }
+
+# Add keys here for the browser to be entirely unaware of
+# This means that misbehaving clients cannot peer into other memory secrets from JavaScript
+banned_settings_values = {
+	"cap_login_expiry": True,
+	"cap_login_token": True,
+	"cap_use_cap_workers": True,
+	"comfy_address": True,
+	"comfy_path": True,
+	"comfy_port": True,
+	"comfy_uuid": True,
+	"ui_anonymous_mode": True
+}
+
+def create_settings_json_for_browser():
+	keys = gui_default_settings.keys()
+	output_dict = {}
+	for key in keys:
+		if key in banned_settings_values:
+			continue
+		output_dict[key] = gui_default_settings[key]
+
+	data = json.dumps(output_dict)
+	return data
 
 img2img_crop_types = [
 	"Resize Only",
@@ -395,6 +377,19 @@ def scan_for_comfy_models():
 			if os.path.splitext(model)[1].lower() == ".safetensors":
 				stage_c_models.append(f"cascade/stage_c/{model}")
 	return clip_models, stage_b_models, stage_c_models
+
+def search_for_csvs():
+	path = os.listdir("autocomplete/csv")
+	valid_csvs = []
+	for file in path:
+		ext = os.path.splitext(file)
+		if ext[1] == ".csv" and ext[0] != "dummy":
+			valid_csvs.append((file, f"autocomplete/csv/{file}"))
+	if len(valid_csvs) == 0:
+		valid_csvs.append(("No available CSVs found.", "not_selected.csv"))
+	valid_csvs.append(("Scan for new CSVs.", "updating_the.csv"))
+	
+	return valid_csvs
 
 def image_to_b64(image):
 	bytes_buffer = io.BytesIO()

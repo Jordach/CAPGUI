@@ -12,6 +12,7 @@
     box-shadow: var(--input-shadow);
     background: light-dark(#ffffff, #0b0f19);
     color: var(--body-text-color);
+    font-family: var(--font);
     font-weight: var(--input-text-weight);
     font-size: var(--input-text-size);
     line-height: var(--line-sm);
@@ -31,12 +32,14 @@ body.dark #tagcomplete {
     display: grid;
     grid-template-columns: 1fr auto;
     gap: 8px;
-    padding: 6px 8px;
+    padding: 10px;
+    white-space: break-spaces;
+    min-width: 100px;
     cursor: pointer;
 }
 
 #tagcomplete ul > li:nth-child(odd) {
-	background-color: light-dark(#f7f7f7, #232a39);
+    background-color: light-dark(#f9fafb, #111827);
 }
 
 #tagcomplete ul > li:hover {
@@ -47,22 +50,47 @@ body.dark #tagcomplete {
     background-color: light-dark(#e5e7eb, #374151);
 }
 
+/* Invalid */
+#tagcomplete ul > li[data-class="-1"] {
+    color: light-dark(maroon, red);
+}
+
+/* General */
 #tagcomplete ul > li[data-class="0"] {
     color: light-dark(dodgerblue, lightblue);
 }
 
+/* Artist */
 #tagcomplete ul > li[data-class="1"] {
-    color: light-dark(firebrick, indianred);
+    color: light-dark(goldenrod, gold);
 }
 
-#tagcomplete ul > li[data-class="2"] {
-    color: light-dark(darkorchid, violet);
+/* Copyright */
+#tagcomplete ul > li[data-class="3"] {
+    color: light-dark(darkorchid, orchid);
 }
 
+/* Character */
 #tagcomplete ul > li[data-class="4"] {
-    color: light-dark(darkgreen, lightgreen);
+    color: light-dark(darkgreen, green);
 }
 
+/* Copyright / Species */
 #tagcomplete ul > li[data-class="5"] {
-    color: light-dark(darkorange, orange);
+    color: light-dark(darkorchid, orchid);
+}
+
+/* Deprecated */
+#tagcomplete ul > li[data-class="6"] {
+    color: light-dark(maroon, red);
+}
+
+/* Meta */
+#tagcomplete ul > li[data-class="7"] {
+    color: light-dark(seagreen, darkseagreen);
+}
+
+/* Lore */
+#tagcomplete ul > li[data-class="8"] {
+    color: light-dark(dodgerblue, lightblue);
 }

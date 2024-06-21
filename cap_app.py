@@ -85,7 +85,8 @@ with gr.Blocks(title=f"{'[ANON MODE] ' if cap_util.gui_default_settings['ui_anon
 	register_tab(global_tabs, post_hooks, "tools", "Tools", tools.tools_tab, tools.tools_tab_post_hook, False, False, True)
 	register_tab(global_tabs, post_hooks, "settings", "Settings", settings.settings_tab, gui_generics.dummy_post_hook, False, False, True)
 	register_tab(global_tabs, post_hooks, "donate", "Donate", donate.donate_tab, gui_generics.dummy_post_hook, False, False, True)
-
+	# Special: Handle the quick access topbar:
+	post_hooks.append((topbar.topbar_post_hook, global_tabs, global_tabs["topbar"]))
 	# Gradio element Functions that work on the current and or other tabs go here:
 	for func in post_hooks:
 		func[0](func[1], func[2])
@@ -109,6 +110,7 @@ if not hasattr(cap_util, "gradio_response_header"):
 
 appended_script = f'''<script type="text/javascript" src="file=custom_js.js?{os.path.getmtime("custom_js.js")}"></script>
 <link rel="stylesheet" href="file=custom_css.css?{os.path.getmtime("custom_css.css")}">
+<script type="text/javascript" src="file=autocomplete/util.js?{os.path.getmtime("autocomplete/util.js")}"></script>
 <script type="text/javascript" src="file=autocomplete/tagcomplete.js?{os.path.getmtime("autocomplete/tagcomplete.js")}"></script>
 <link rel="stylesheet" href="file=autocomplete/tagcomplete.css?{os.path.getmtime("autocomplete/tagcomplete.css")}">
 '''

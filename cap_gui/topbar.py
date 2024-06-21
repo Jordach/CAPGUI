@@ -1,4 +1,5 @@
 import cap_util
+import os
 import gradio as gr
 
 # Components in a fixed, static position 
@@ -67,9 +68,21 @@ def get_restart_websocket_button():
 	button.click(restart_socket, inputs=None, outputs=None)
 	return button
 
-def get_backend_dropdown():
-	dropdown = gr.Dropdown(["ComfyUI", "CAP"], label="Generation Backend:", value="ComfyUI", filterable=False, scale=1)
+def get_autocomplete_dropdown(global_ctx):
+	csvs = cap_util.search_for_csvs()
+	dropdown = gr.Dropdown(csvs, label="Auto Complete CSV:", value=cap_util.gui_default_settings["tac_tagFile"], filterable=False, allow_custom_value=False)
+
 	return dropdown
+
+def save_auto_csv_changes(autocomplete):
+	# Don't update the settings_json field if we're just updating the list
+	if autocomplete == "updating_the.csv":
+		csvs = cap_util.search_for_csvs()
+		return gr.Textbox(), gr.Dropdown(choices=csvs, value=cap_util.gui_default_settings["tac_tacFile"])
+
+	cap_util.gui_default_settings["tac_tagFile"] = autocomplete
+	cap_util.save_config(backup=False)
+	return cap_util.create_settings_json_for_browser(), gr.Dropdown()
 
 def create_topbar(global_ctx, sc_m, sc_d, sb_m, sb_d, cl_m, cl_d):
 	global_ctx["topbar"] = {}
@@ -84,4 +97,11 @@ def create_topbar(global_ctx, sc_m, sc_d, sb_m, sb_d, cl_m, cl_d):
 		with gr.Column(scale=0):
 			global_ctx["topbar"]["model_rescan"] = get_model_refresh_button(global_ctx["topbar"])
 			global_ctx["topbar"]["restart_websocket"] = get_restart_websocket_button()
-		global_ctx["topbar"]["backend"] = get_backend_dropdown()
+		global_ctx["topbar"]["autocomplete_csv"] = get_autocomplete_dropdown(global_ctx)
+
+def topbar_post_hook(global_ctx, local_ctx):
+	local_ctx["autocomplete_csv"].input(
+		save_auto_csv_changes, 
+		inputs=global_ctx["topbar"]["autocomplete_csv"],
+		outputs=[global_ctx["settings"]["settings_json"], local_ctx["autocomplete_csv"]]
+	)
