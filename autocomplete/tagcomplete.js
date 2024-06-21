@@ -247,8 +247,6 @@ async function read_gradio_settings() {
     if (only_show_alias)
         search_by_alias = true;
     
-    console.log(tag_file);
-    console.log(tac_tag_file);
     if (tag_file !== tac_tag_file) {
         // Reload the Tag CSV on change
         allTags = [];
