@@ -1,8 +1,7 @@
 let tagCompletionData = {
-    ready: false, tags: [], tagData: {}, tagTries: {},
+    ready: false, allTags: [],
     currentCandidates: [], currentIndex: -1, currentRange: null,
 };
-let allTags = [];
 let popover;
 let pendingCompletion;
 let suppressNextInput;
@@ -63,7 +62,7 @@ function performCompletionAndShow(target, caretRect, tag, selectionStart, select
     // console.time(`Find candidates: ${tag}`);
     const normalized = normalize(tag);
     const tagword = tag.toLowerCase().replace(/[\n\r]/g, "");
-    const candidates = tagCompletionData.currentCandidates = filter_tags_tac(allTags, tagword, tac_search_by_alias).slice(0, 5);
+    const candidates = tagCompletionData.currentCandidates = filter_tags_tac(tagCompletionData.allTags, tagword, tac_search_by_alias).slice(0, 5);
 
     tagCompletionData.currentIndex = -1;
     tagCompletionData.currentRange = {selectionStart, selectionEnd};
@@ -141,7 +140,7 @@ async function initializeData(file) {
     tagCompletionData.ready = false;
     console.log(`Loading tag completion file ${file}...`);
     console.time('Tag completion file loaded');
-    allTags = await loadCSV_tac(file);
+    tagCompletionData.allTags = await loadCSV_tac(file);
     console.timeEnd('Tag completion file loaded');
     tagCompletionData.ready = true;
 }
@@ -179,7 +178,7 @@ async function read_gradio_settings() {
 
     if (tag_file !== tac_tag_file) {
         // Reload the Tag CSV on change
-        allTags = [];
+        tagCompletionData.allTags = [];
         await initializeData(tag_file);
     }
 
