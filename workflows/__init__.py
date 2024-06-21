@@ -12,7 +12,7 @@ def get_txt2img():
 		"scheduler": "simple",
 		"denoise": 1,
 		"model": [
-			"96",
+			"73",
 			0
 		],
 		"positive": [
@@ -297,7 +297,7 @@ def get_basic_img2img():
 			"scheduler": "simple",
 			"denoise": 0.5,
 			"model": [
-				"104",
+				"73",
 				0
 			],
 			"positive": [
