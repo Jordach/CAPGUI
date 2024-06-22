@@ -117,7 +117,7 @@ def get_txt2img():
 		"inputs": {
 		"shift": 2,
 		"model": [
-			"74",
+			"96",
 			0
 		]
 		},
