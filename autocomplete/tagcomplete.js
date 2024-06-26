@@ -66,11 +66,8 @@ function performCompletionAndShow(target, caretRect, tag, selectionStart, select
 
     tagCompletionData.currentIndex = -1;
     tagCompletionData.currentRange = {selectionStart, selectionEnd};
-    // Guard against empty queries
-    if (candidates.length === 0)
-        return
 
-    if (candidates[0].tag.length > 1 || (candidates[0].tag.length > 0 && candidates[0].tag !== normalized)) {
+    if (candidates.length > 1 || (candidates.length > 0 && candidates[0].tag !== normalized)) {
         const {left, bottom} = target.getBoundingClientRect();
         const {left: caretLeft} = caretRect;
 
