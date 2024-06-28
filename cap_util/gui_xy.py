@@ -65,9 +65,6 @@ def process_xy_images(
 	pos_original = pos
 	neg_original = neg
 
-	global gui_default_settings
-	global ws
-
 	workflow_list = []
 
 	#Split by commas, ignoring within double quotes
@@ -100,8 +97,16 @@ def process_xy_images(
 		for x in x_list:	
 			try:
 				def checkint(value):
-					if not value.isdigit():
+					try:
+						test = int(value)
+					except:
 						raise ValueError("Value should be integer")
+
+				def checkfloat(value):
+					try:
+						test = float(value)
+					except:
+						raise ValueError("Value should be a float")
 
 				def do_substitute(type, list, value):
 					match type:
@@ -131,17 +136,27 @@ def process_xy_images(
 
 						case 'clip': nonlocal clip_model; clip_model = value
 
-						case 'Steps C': checkint(value); nonlocal steps_c; steps_c = value
+						case 'Steps C': checkint(value); nonlocal steps_c; steps_c = int(value)
 
-						case 'Steps B': checkint(value); nonlocal steps_b; steps_b = value
+						case 'Steps B': checkint(value); nonlocal steps_b; steps_b = int(value)
 
-						case 'CFG C': checkint(value); nonlocal cfg_c; cfg_c = value
+						case 'CFG C': checkfloat(value); nonlocal cfg_c; cfg_c = float(value)
 
-						case 'CFG B': checkint(value); nonlocal cfg_b; cfg_b = value
+						case 'CFG B': checkfloat(value); nonlocal cfg_b; cfg_b = float(value)
 
-						case 'Compression': checkint(value); nonlocal compression; compression = value
+						case 'Compression': checkint(value); nonlocal compression; compression = int(value)
 
-						case 'Seed': checkint(value); nonlocal seed_c; nonlocal seed_b; seed_c = value; seed_b = value
+						case 'Seed': 
+							checkint(value)
+							nonlocal seed_c
+							seed_c = int(value)
+
+							nonlocal random_seed_b
+							random_seed_b = random.randint(0, 2147483647)
+
+							if seed_c < 0:
+								nonlocal random_seed_c
+								random_seed_c = random.randint(0, 2147483647)
 
 						case _: raise ValueError(f"Not implemented {xy_x_type}")
 
