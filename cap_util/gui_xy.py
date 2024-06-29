@@ -229,14 +229,13 @@ def process_xy_images(
 					return [],None,None
 
 	timer_start = time.time()
-	
+	gr.Info("Generating grid images, this may take a while.")
 	cells = gen_xy_images_websocket(cap_util.ws, workflow_list)
-
-	timer_finish = f"{time.time()-timer_start:.2f}"
 	
 	# Save images to disk if enabled
 	local_paths = []
 	if save_images:
+		gr.Info("Saving individual grid images to disk.")
 		for i, cell in enumerate(cells):
 			image = cell['image']
 			workflow = cell['workflow']
@@ -244,11 +243,14 @@ def process_xy_images(
 			file_path = cap_util.get_image_save_path("txt2img")
 			save_image_with_meta(image[0], workflow, json.dumps(gen_dict), file_path)
 
+	gr.Info("Now creating the stitched grid image, this may take a while.")
 	gallery_images = [cell['image'] for cell in cells]
 	gallery_images = [create_grid_image(x_list, y_list, gallery_images, width, height)]
 	file_path = cap_util.get_image_save_path("txt2img_grid")
+	gr.Info("Now saving grid to disk, this may take a while.")
 	save_image_with_meta(gallery_images[0], workflow, json.dumps(gen_dict), file_path)
 	local_paths.append(file_path)
+	timer_finish = f"{time.time()-timer_start:.2f}"
 	
 	gen_info = cells[0]['gen_info']
 	gen_dict = cells[0]['gen_dict']
