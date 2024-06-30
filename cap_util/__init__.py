@@ -224,7 +224,7 @@ ksampler_presets_stage_b["builtin_quality"] = {
 	"sampler": "euler_ancestral_cfg_pp",
 	"scheduler": "simple",
 	"steps": 12,
-	"cfg": 0.75,
+	"cfg": 1.5,
 }
 
 ksampler_presets_stage_b["builtin_fast"] = {
