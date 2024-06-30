@@ -52,7 +52,7 @@ gui_default_settings = {
 	"gen_c_shift_step": 0.01,
 
 	"gen_c_cfg": 7.0,
-	"gen_c_cfg_min": 1.0,
+	"gen_c_cfg_min": 0.0,
 	"gen_c_cfg_max": 15.0,
 	"gen_c_cfg_step": 0.05,
 
@@ -77,7 +77,7 @@ gui_default_settings = {
 	"gen_b_steps_step": 1,
 
 	"gen_b_cfg": 1.5,
-	"gen_b_cfg_min": 1.0,
+	"gen_b_cfg_min": 0.0,
 	"gen_b_cfg_max": 4,
 	"gen_b_cfg_step": 0.05,
 
@@ -138,7 +138,9 @@ inpaint_mask_types = [
 
 ksampler_samplers = [
 	("Euler A", "euler_ancestral"),
+	("Euler A CFG++", "euler_ancestral_cfg_pp"),
 	("Euler", "euler"),
+	("Euler CFG++", "euler_cfg_pp"),
 	("Heun", "heun"),
 	("Heun++2", "heunpp2"),
 	("DPM 2", "dpm_2"),
@@ -174,15 +176,23 @@ ksampler_presets_stage_c["builtin_basic"] = {
 	"sampler": "euler_ancestral",
 	"scheduler": "simple",
 	"steps": 20,
-	"cfg": 4,
+	"cfg": 7,
 	"shift": 2,
 }
 
 ksampler_presets_stage_c["builtin_quality"] = {
-	"sampler": "dpmpp_sde",
+	"sampler": "euler_ancestral_cfg_pp",
 	"scheduler": "simple",
 	"steps": 20,
 	"cfg": 4,
+	"shift": 2,
+}
+
+ksampler_presets_stage_c["builtin_quality_dpm"] = {
+	"sampler": "dpmpp_sde",
+	"scheduler": "simple",
+	"steps": 20,
+	"cfg": 7,
 	"shift": 2,
 }
 
@@ -190,15 +200,16 @@ ksampler_presets_stage_c["builtin_fast"] = {
 	"sampler": "dpmpp_sde",
 	"scheduler": "simple",
 	"steps": 12,
-	"cfg": 4,
+	"cfg": 7,
 	"shift": 2,
 }
 
 ksampler_presets_stage_c_dropdown = []
 ksampler_presets_stage_c_builtin = [
-	("Basic Default",   "builtin_basic"),
-	("Quality Default", "builtin_quality"),
-	("Fast Default",    "builtin_fast"),
+	("Basic Default",         "builtin_basic"),
+	("Quality Default",       "builtin_quality"),
+	("Quality Default (Old)", "builtin_quality_dpm"),
+	("Fast Default",          "builtin_fast"),
 ]
 
 ksampler_presets_stage_b = {}
@@ -207,6 +218,13 @@ ksampler_presets_stage_b["builtin_basic"] = {
 	"scheduler": "simple",
 	"steps": 12,
 	"cfg": 1.5,
+}
+
+ksampler_presets_stage_b["builtin_quality"] = {
+	"sampler": "euler_ancestral_cfg_pp",
+	"scheduler": "simple",
+	"steps": 12,
+	"cfg": 0.75,
 }
 
 ksampler_presets_stage_b["builtin_fast"] = {
@@ -218,8 +236,9 @@ ksampler_presets_stage_b["builtin_fast"] = {
 
 ksampler_presets_stage_b_dropdown = []
 ksampler_presets_stage_b_builtin = [
-	("Basic Default", "builtin_basic"),
-	("Fast Default",  "builtin_fast"),
+	("Basic Default",   "builtin_basic"),
+	("Quality Default", "builtin_quality"),
+	("Fast Default",    "builtin_fast"),
 ]
 
 # Imports for functions and actions
