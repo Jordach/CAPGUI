@@ -739,8 +739,8 @@ def process_basic_img2img(
 		workflow["47"]["inputs"]["vae_name"] = os.path.join("cascade", "stage_a.safetensors")
 
 	# Handle Batch size
-	workflow["96"]["inputs"]["amount"] = batch + 1
-	workflow["97"]["inputs"]["amount"] = batch + 1
+	workflow["96"]["inputs"]["amount"] = batch
+	workflow["97"]["inputs"]["amount"] = batch
 
 	# Handle getting images from a batch:
 	if batch > 1 and latent_id > 0:
@@ -869,8 +869,8 @@ def process_basic_inpaint(
 		workflow["47"]["inputs"]["vae_name"] = os.path.join("cascade", "stage_a.safetensors")
 
 	# Handle Batch size
-	workflow["96"]["inputs"]["amount"] = batch + 1
-	workflow["97"]["inputs"]["amount"] = batch + 1
+	workflow["96"]["inputs"]["amount"] = batch
+	workflow["97"]["inputs"]["amount"] = batch
 
 	# Handle getting images from a batch:
 	if batch > 1 and latent_id > 0:
