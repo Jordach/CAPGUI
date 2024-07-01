@@ -119,7 +119,10 @@ def process_xy_images(
 							search = list[0]
 							if search not in pos:
 								raise ValueError(f"{search} not found in positive prompt")
-							pos = pos.replace(search, value)
+							if value == "__SR_DELETE__":
+								pos = pos.replace(search, "")
+							else:
+								pos = pos.replace(search, value)
 
 						case 'Negative S/R': 
 							if value is None or value == "":
@@ -128,7 +131,10 @@ def process_xy_images(
 							search = list[0]
 							if search not in neg:
 								raise ValueError(f"{search} not found in negative prompt")
-							neg = neg.replace(search, value)
+							if value == "__SR_DELETE__":
+								neg = neg.replace(search, "")
+							else:
+								neg = neg.replace(search, value)
 
 						case 'stage_c': nonlocal stage_c; stage_c = value
 
