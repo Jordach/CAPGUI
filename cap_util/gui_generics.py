@@ -285,7 +285,6 @@ def get_generation_settings_column(global_ctx, local_ctx):
 
 	with gr.Accordion("Extras:", open=False, elem_id="extra_settings"):
 		local_ctx["use_stage_a_hq"] = gr.Checkbox(True, label="Use High Quality Decoder?", info="Uses a custom finetune of Stage A to decode latents with less overall blur.")
-
 		with gr.Accordion(label="X/Y Settings:", open=False, elem_id="base_settings") as xy_block:
 			gui_xy(global_ctx, local_ctx)
 		
