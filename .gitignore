@@ -173,3 +173,6 @@ tmp/
 presets/
 presets/*
 autocomplete/csv/*.csv
+util/clip_model/model.safetensors
+util/tag_similarity_cloud_umap.png
+util/tag_list.conf

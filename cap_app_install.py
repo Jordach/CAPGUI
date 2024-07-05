@@ -136,7 +136,7 @@ elif args.gradio:
 				"misc":         encoders,
 			}
 			
-			if not choices["stage_b_big"] or not choices["stage_b_lite"]:
+			if not choices["stage_b_big"] and not choices["stage_b_lite"]:
 				raise gr.Error("One or more Stage B models must be downloaded.")
 
 			cap_installer.download_base_models(choices, True)
