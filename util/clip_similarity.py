@@ -18,6 +18,9 @@ num_post_threshold = 100000
 device = "cuda"
 caption_pre = "by novelai, detailed background, anthro, solo, "
 
+if not os.path.exists("tag_list.conf"):
+	raise Exception("There's no tag_list.conf file to load, so stopping.")
+
 tags = []
 with open("tag_list.conf", "r", encoding="utf-8") as file:
 	tags = file.readlines()
