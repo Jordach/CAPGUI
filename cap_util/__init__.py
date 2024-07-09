@@ -336,22 +336,28 @@ def get_websocket_address():
 def calc_compression_factor(width, height):
 	# Don't update the element when it can't find a value
 	final_compression_factor = None
+	# Initialize with a very large number
+	smallest_gap = float('inf')
 	# Start from the highest compression factor as lower factors have better quality
-	for compression in range(80, 31, -1):
+	for compression in range(80, 15, -1):
 		res_se = min(width, height)
 		res_le = max(width, height)
 		aspect = res_le / res_se
-		
+
 		latent_min = res_se // compression
 		latent_max = res_le // compression
 		latent_div = (latent_max + latent_min) / 2
-		
-		new_center = remap(aspect, 1, 3.75, 32, 40)
-		new_center = clamp(new_center, 31.5, 40)
-		
-		if latent_div >= new_center-1 and latent_div <= new_center:
+
+		new_center = remap(aspect, 1, 3.75, 32, 38.5)
+		new_center = clamp(new_center, 32, 38.5)
+
+		# Calculate the absolute difference between latent_div and new_center
+		gap = abs(latent_div - new_center)
+
+		# Update the smallest_gap and final_compression_factor accordingly
+		if gap < smallest_gap:
+			smallest_gap = gap
 			final_compression_factor = compression
-			break
 
 	return final_compression_factor
 
