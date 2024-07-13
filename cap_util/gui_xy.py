@@ -290,14 +290,15 @@ def gen_xy_images_websocket(ws, workflows):
 			message = json.loads(out)
 			if message['type'] == 'executing':
 				data = message['data']
-				if data['prompt_id'] in prompt_ids:
-					last_idx = prompt_ids.index(data['prompt_id'])
-					if data['node'] is None:
-						cells[last_idx]['status'] = 'Complete'
-						if all(cell['status'] == 'Complete' for cell in cells):
-							break #Execution is done
-					else:
-						current_node = data['node']
+				if "prompt_id" in data:
+					if data['prompt_id'] in prompt_ids:
+						last_idx = prompt_ids.index(data['prompt_id'])
+						if data['node'] is None:
+							cells[last_idx]['status'] = 'Complete'
+							if all(cell['status'] == 'Complete' for cell in cells):
+								break #Execution is done
+						else:
+							current_node = data['node']
 		else:
 			if current_node == 'save_image_websocket_node':
 				images_output = output_images.get(current_node, [])
