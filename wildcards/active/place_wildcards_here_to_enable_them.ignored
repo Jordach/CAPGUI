@@ -1,1 +1,5 @@
 Wildcards placed here will be read and loaded during generation.
+
+Wildcards will insert and replace text whenever it sees the filename of a matching wildcard minus extension of the file in question, and is Case Sensitive.
+Wildcards have no limit on included text and can include things such as backslashes, and will not insert text as if you'd have manually typed it.
+This means that you can randomly set emphasis or custom prompt editing features using this.

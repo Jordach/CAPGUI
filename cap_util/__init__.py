@@ -264,6 +264,7 @@ import math
 import hashlib
 from cap_util.metadata import save_image_with_meta
 from cap_util.gui_xy import process_xy_images
+from cap_util.wildcards import read_and_apply_wildcards
 
 def load_config():
 	global gui_default_settings
@@ -607,9 +608,10 @@ def process_basic_txt2img(
 	workflow = json.loads(workflows.get_txt2img())
 	# Stage C settings:
 
+	new_pos, new_neg = read_and_apply_wildcards(pos, neg)
 	# Prompts
-	workflow["97"]["inputs"]["text"] = pos
-	workflow["98"]["inputs"]["text"]  = neg
+	workflow["97"]["inputs"]["text"] = new_pos
+	workflow["98"]["inputs"]["text"]  = new_neg
 
 	# Stage C KSampler
 	workflow["3"]["inputs"]["steps"]        = steps_c
@@ -670,7 +672,7 @@ def process_basic_txt2img(
 		timer_finish = f"{time.time()-timer_start:.2f}"
 		
 		gen_info, gen_dict = create_infotext_objects(
-			pos, neg, width, height, steps_c, workflow["3"]["inputs"]["seed"],
+			new_pos, new_neg, width, height, steps_c, workflow["3"]["inputs"]["seed"],
 			cfg_c, c_rescale, c_sampler, c_schedule, batch, compression, shift, steps_b, workflow["33"]["inputs"]["seed"],
 			cfg_b, b_sampler, b_schedule, stage_b, stage_c, clip_model, use_hq_stage_a, "Text to Image", markdown=True
 		)
@@ -706,8 +708,9 @@ def process_basic_img2img(
 
 	# Stage C settings:
 	# Prompts:
-	workflow["101"]["inputs"]["text"] = pos
-	workflow["106"]["inputs"]["text"] = neg
+	new_pos, new_neg = read_and_apply_wildcards(pos, neg)
+	workflow["101"]["inputs"]["text"] = new_pos
+	workflow["106"]["inputs"]["text"] = new_neg
 
 	# KSampler:
 	workflow["3"]["inputs"]["steps"]        = steps_c
@@ -791,7 +794,7 @@ def process_basic_img2img(
 		timer_finish = f"{time.time()-timer_start:.2f}"
 
 		gen_info, gen_dict = create_infotext_objects(
-			pos, neg, width, height, steps_c, workflow["3"]["inputs"]["seed"],
+			new_pos, new_neg, width, height, steps_c, workflow["3"]["inputs"]["seed"],
 			cfg_c, c_rescale, c_sampler, c_schedule, batch, compression, shift, steps_b, workflow["33"]["inputs"]["seed"], 
 			cfg_b, b_sampler, b_schedule, stage_b, stage_c, clip_model, use_hq_stage_a, "Image to Image", markdown=True
 		)
@@ -829,8 +832,9 @@ def process_basic_inpaint(
 
 	# Stage C settings:
 	# Prompts:
-	workflow["101"]["inputs"]["text"] = pos
-	workflow["106"]["inputs"]["text"] = neg
+	new_pos, new_neg = read_and_apply_wildcards(pos, neg)
+	workflow["101"]["inputs"]["text"] = new_pos
+	workflow["106"]["inputs"]["text"] = new_neg
 
 	# KSampler:
 	workflow["3"]["inputs"]["steps"]        = steps_c
@@ -921,7 +925,7 @@ def process_basic_inpaint(
 		timer_finish = f"{time.time()-timer_start:.2f}"
 
 		gen_info, gen_dict = create_infotext_objects(
-			pos, neg, width, height, steps_c, workflow["3"]["inputs"]["seed"],
+			new_pos, new_neg, width, height, steps_c, workflow["3"]["inputs"]["seed"],
 			cfg_c, c_rescale, c_sampler, c_schedule, batch, compression, shift, steps_b, workflow["33"]["inputs"]["seed"],
 			cfg_b, b_sampler, b_schedule, stage_b, stage_c, clip_model, use_hq_stage_a, "Inpainting", markdown=True
 		)

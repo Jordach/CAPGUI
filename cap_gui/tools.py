@@ -23,6 +23,9 @@ def tools_tab(global_ctx, local_ctx):
 					local_ctx["send_to_button"] = gui_generics.get_send_to_button()
 					local_ctx["image_json"] = gr.Markdown("", visible=False, label="Generation JSON:")
 
+	with gr.Accordion("Wildcard Creator:"):
+		gr.Markdown("todo - helps create and deduplicate new wildcards")
+
 	with gr.Accordion("Prompt Control Templates:"):
 		gr.Markdown("todo")
 
