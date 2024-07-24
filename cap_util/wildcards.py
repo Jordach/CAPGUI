@@ -31,7 +31,7 @@ def read_and_apply_wildcards(positive, negative):
 		# Only process wildcards ending in .txt
 		if ext[1] == ".txt":
 			replacements = []
-			with open(os.path.join("wildcards", "active", wc), encoding="utf-8") as wildcard:
+			with open(os.path.join("wildcards", "active", wc), "r", encoding="utf-8") as wildcard:
 				for line in wildcard.readlines():
 					if line.strip() != "":
 						replacements.append(line.strip())
