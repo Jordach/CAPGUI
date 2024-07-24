@@ -405,6 +405,14 @@ def encode_prompt(clip, text, default_style="comfy", default_normalization="none
 		for key in tokens:
 			tokens[key].extend(c[key])
 
+	word_count = 0
+	for k in tokens:
+		for ci in range(len(tokens[k])):
+			for i, chunk in enumerate(tokens[k][ci]):
+				if chunk[2] != 0:
+					tokens[k][ci][i] = (chunk[0], chunk[1], chunk[2] + word_count)
+			word_count = max(word_count, max([x for _,_,x in tokens[k][ci]]))
+
 	# Non-SDXL has only "l"
 	if "g" in tokens and l_prompts:
 		text_l = " ".join(l_prompts)
