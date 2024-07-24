@@ -5,11 +5,28 @@ def read_and_apply_wildcards(positive, negative):
 	output_positive = positive
 	output_negative = negative
 	wcs = os.listdir("wildcards/active/")
-	# Don't even bother scanning a folder if it's potentially emptied by the user mistakenly
-	if len(wcs) < 1:
+
+	# Try and avoid loading files if a wildcard isn't used
+	wc_used = False
+	used_wcs = []
+	for wc in wcs:
+		ext = os.path.splitext(wc)
+		# Only process wildcards ending in .txt
+		if ext[1] == ".txt":
+			pos_count = positive.count(ext[0])
+			neg_count = negative.count(ext[0])
+
+			# Wildcard was invoked, so don't return early
+			if pos_count > 0 or neg_count > 0:
+				wc_used = True
+				used_wcs.append(wc)
+				break
+
+	# Don't even bother replacing things
+	if not wc_used:
 		return positive, negative
 
-	for wc in wcs:
+	for wc in used_wcs:
 		ext = os.path.splitext(wc)
 		# Only process wildcards ending in .txt
 		if ext[1] == ".txt":
@@ -19,10 +36,15 @@ def read_and_apply_wildcards(positive, negative):
 					if line.strip() != "":
 						replacements.append(line.strip())
 
-			random_replacement = random.choice(replacements)
-			output_positive = positive.replace(ext[0], random_replacement)
-			random_replacement = random.choice(replacements)
-			output_negative = negative.replace(ext[0], random_replacement)
+			pos_count = output_positive.count(ext[0])
+			for loop in range(pos_count):
+				random_replacement = random.choice(replacements)
+				output_positive = output_positive.replace(ext[0], random_replacement, 1)
+			
+			neg_count = output_negative.count(ext[0])
+			for loop in range(neg_count):
+				random_replacement = random.choice(replacements)
+				output_negative = output_negative.replace(ext[0], random_replacement, 1)
 		else:
 			continue
 		
