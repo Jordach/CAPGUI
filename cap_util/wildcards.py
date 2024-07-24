@@ -20,7 +20,6 @@ def read_and_apply_wildcards(positive, negative):
 			if pos_count > 0 or neg_count > 0:
 				wc_used = True
 				used_wcs.append(wc)
-				break
 
 	# Don't even bother replacing things
 	if not wc_used:
