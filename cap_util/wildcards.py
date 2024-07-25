@@ -36,13 +36,14 @@ def read_and_apply_wildcards(positive, negative):
 						replacements.append(line.strip())
 
 			pos_count = output_positive.count(ext[0])
-			for loop in range(pos_count):
-				random_replacement = random.choice(replacements)
+			n_replacements = len(replacements) - 1
+			for _ in range(pos_count):
+				random_replacement = replacements[random.randint(0, n_replacements)]
 				output_positive = output_positive.replace(ext[0], random_replacement, 1)
 			
 			neg_count = output_negative.count(ext[0])
-			for loop in range(neg_count):
-				random_replacement = random.choice(replacements)
+			for _ in range(neg_count):
+				random_replacement = replacements[random.randint(0, n_replacements)]
 				output_negative = output_negative.replace(ext[0], random_replacement, 1)
 		else:
 			continue
