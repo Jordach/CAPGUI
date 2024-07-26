@@ -34,7 +34,10 @@ def inpaint_tab(global_ctx, local_ctx):
 					local_ctx["copy_to_gallery"] = gr.Checkbox(cap_util.gui_default_settings["ui_img2img_include_original"], label="Show Input Image in Gallery?")
 					local_ctx["save_mask"] = gr.Checkbox(True, label="Save ComfyUI Inpainting Mask?")
 				local_ctx["stage_c_denoise"] = gr.Slider(
-					minimum=0, maximum=1, value=0.75, step=0.01, label="Maximum Denoise Strength:"
+					minimum=0, maximum=1, value=0.75, step=0.01, label="Maximum Mask Strength:"
+				)
+				local_ctx["stage_c_min_denoise"] = gr.Slider(
+					minimum=0, maximum=1, value=0, step=0.01, label="Minimum Mask Strength:"
 				)
 			gui_generics.get_generation_settings_column(global_ctx, local_ctx)
 		with gr.Column():
@@ -49,7 +52,7 @@ def create_mask_and_gen(
 		stage_b, stage_c, clip_model, backend,
 		denoise, use_hq_stage_a, save_images, save_mask,
 		c_sampler, c_scheduler, b_sampler, b_scheduler,
-		c_rescale
+		c_rescale, min_denoise
 ):
 	_img = editor_images["layers"][0]
 	path = cap_util.get_image_save_path("inpainting")
@@ -58,10 +61,11 @@ def create_mask_and_gen(
 	pixels = img.load()
 
 	alpha_pixel = ""
-	if mask_mode == cap_util.inpaint_mask_types[0]:
-		alpha_pixel = (255, 255, 255, 255)
-	elif mask_mode == cap_util.inpaint_mask_types[1]:
-		alpha_pixel = (0, 0, 0, 255)
+	pixel_min = int(255*min_denoise)
+	if mask_mode == cap_util.inpaint_mask_types[0]: # Auto/White - Min
+		alpha_pixel = (255-pixel_min, 255-pixel_min, 255-pixel_min, 255)
+	elif mask_mode == cap_util.inpaint_mask_types[1]: # Comfy/Black - Min
+		alpha_pixel = (pixel_min, pixel_min, pixel_min, 255)
 	for x in range(w):
 		for y in range(h):
 			pixel = pixels[x, y]
@@ -154,7 +158,7 @@ def inpaint_tab_post_hook(global_ctx, local_ctx):
 			global_ctx["topbar"]["stage_b"], global_ctx["topbar"]["stage_c"], global_ctx["topbar"]["clip"], global_ctx["topbar"]["backend"],
 			local_ctx["stage_c_denoise"],    local_ctx["use_stage_a_hq"], local_ctx["stage_c_save_images"], local_ctx["save_mask"],
 			local_ctx["stage_c_sampler"], local_ctx["stage_c_scheduler"], local_ctx["stage_b_sampler"], local_ctx["stage_b_scheduler"],
-			local_ctx["stage_c_rescale"]
+			local_ctx["stage_c_rescale"], local_ctx["stage_c_min_denoise"]
 		],
 		outputs=[local_ctx["gallery"], local_ctx["gen_info_box"], local_ctx["gen_json"]],
 		show_progress="minimal",
