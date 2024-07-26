@@ -212,6 +212,21 @@ def get_generation_settings_column(global_ctx, local_ctx):
 						if add_warning:
 							latent_text += " ⚠️"
 						return gr.Slider(), aspect_text, latent_text
+
+				def compression_factor_change(width, height, compression):
+					aspect_text = cap_util.calc_aspect_string(width, height)
+					lw, lh = width//compression, height//compression
+					latent_text = f"{lw}x{lh}"
+					add_warning = False
+					if lw < 16 or lw > 64:
+						add_warning = True
+					if lh < 16 or lh > 64:
+						add_warning = True
+						
+					if add_warning:
+						latent_text += " ⚠️"
+					return aspect_text, latent_text
+
 				local_ctx["stage_c_width"].change(
 					calc_compression_factor,
 					inputs=[local_ctx["stage_c_width"], local_ctx["stage_c_height"], local_ctx["stage_c_auto_compressor"], local_ctx["stage_c_compression"]],
@@ -222,6 +237,12 @@ def get_generation_settings_column(global_ctx, local_ctx):
 					calc_compression_factor,
 					inputs=[local_ctx["stage_c_width"], local_ctx["stage_c_height"], local_ctx["stage_c_auto_compressor"], local_ctx["stage_c_compression"]],
 					outputs = [local_ctx["stage_c_compression"], local_ctx["aspect_info"], local_ctx["latent_res"]], show_progress=False, queue=False
+				)
+
+				local_ctx["stage_c_compression"].input(
+					compression_factor_change,
+					inputs=[local_ctx["stage_c_width"], local_ctx["stage_c_height"], local_ctx["stage_c_compression"]],
+					outputs=[local_ctx["aspect_info"], local_ctx["latent_res"]], show_progress=False, queue=False
 				)
 		# KSampler Settings
 		with gr.Row():
