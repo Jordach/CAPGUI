@@ -21,7 +21,13 @@ An installer browser tab should automatically launch and offer to automatically 
 ## Updating:
 If you downloaded this repository with Git, just `git pull`.
 
-## Optional External Dependancies:
+## External Dependancies:
 [ComfyUI for Local Generation](https://github.com/comfyanonymous/ComfyUI/) (No knowledge of nodes required.)
 
 If you're too worried about breaking or modifying your existing ComfyUI installation, download and install another copy of ComfyUI, preferably to another directory to avoid it - this way nothing will be accidentially overwritten.
+
+## Optional External Dependancies:
+If you have an addon for ComfyUI that adds a new sampler, or scheduler that is directly added to the basic KSampling node, feel free to write a PR adding them.
+
+[Euler SMEA Sampling](https://github.com/Koishi-Star/Euler-Smea-Dyn-Sampler/)
+Adds SMEA, DY, Euler Negative sampling support, samplers that are added by this extension are marked as (Ext) in the sampler dropdown.

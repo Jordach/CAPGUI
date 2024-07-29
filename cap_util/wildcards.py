@@ -35,6 +35,8 @@ def read_and_apply_wildcards(positive, negative):
 					if line.strip() != "":
 						replacements.append(line.strip())
 
+			# Always pays off to be massively paranoid
+			random.shuffle(replacements)
 			pos_count = output_positive.count(ext[0])
 			n_replacements = len(replacements) - 1
 			for _ in range(pos_count):
