@@ -12,6 +12,8 @@ ws = ""
 send_to = {}
 # Memory for load_last_generation
 last_generation = {}
+# Memory for xy grids
+xy_grid_workflow = {}
 
 gui_default_settings = {
 	# Path settings for ComfyUI
@@ -608,6 +610,7 @@ def process_basic_txt2img(
 ):
 	global gui_default_settings
 	global ws
+	global xy_grid_workflow
 
 	# Modify template JSON to fit parameters.
 	workflow = json.loads(workflows.get_txt2img())
@@ -676,6 +679,8 @@ def process_basic_txt2img(
 		gallery_images = gen_images_websocket(ws, workflow)
 		timer_finish = f"{time.time()-timer_start:.2f}"
 		
+		# Usually things don't need to access this
+		xy_grid_workflow = copy.deepcopy(workflow)
 		gen_info, gen_dict = create_infotext_objects(
 			new_pos, new_neg, width, height, steps_c, workflow["3"]["inputs"]["seed"],
 			cfg_c, c_rescale, c_sampler, c_schedule, batch, compression, shift, steps_b, workflow["33"]["inputs"]["seed"],
