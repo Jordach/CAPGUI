@@ -28,9 +28,13 @@ def send_to_targets(global_ctx, current_tab):
 	return targets
 
 # Component functions for loading, refreshing and saving of Sampling presets
-def reload_preset_c():
+def startup_preset_c():
 	presets.load_all_user_presets(c=True)
 	return cap_util.ksampler_presets_stage_c_dropdown
+
+def reload_preset_c():
+	presets.load_all_user_presets(c=True)
+	return gr.Dropdown(choices=cap_util.ksampler_presets_stage_c_dropdown, value=cap_util.ksampler_presets_stage_c_dropdown[0])
 
 def load_preset_settings_c(preset):
 	settings = cap_util.ksampler_presets_stage_c[preset]
@@ -39,9 +43,13 @@ def load_preset_settings_c(preset):
 def save_preset_settings_c(sampler, scheduler, steps, cfg, shift, filename, desc):
 	presets.save_as_new_preset(filename, desc, "c", steps, cfg, sampler, scheduler, shift)
 
-def reload_preset_b():
+def startup_preset_b():
 	presets.load_all_user_presets(b=True)
 	return cap_util.ksampler_presets_stage_b_dropdown
+
+def reload_preset_b():
+	presets.load_all_user_presets(b=True)
+	return gr.Dropdown(choices=cap_util.ksampler_presets_stage_b, value=cap_util.ksampler_presets_stage_b_dropdown[0])
 
 def load_preset_settings_b(preset):
 	settings = cap_util.ksampler_presets_stage_b[preset]
@@ -246,7 +254,7 @@ def get_generation_settings_column(global_ctx, local_ctx):
 				)
 		# KSampler Settings
 		with gr.Row():
-			local_ctx["stage_c_preset_dropdown"] = gr.Dropdown(reload_preset_c(), scale=6, label="Load Preset:", value=cap_util.ksampler_presets_stage_c_dropdown[0][1], multiselect=False, filterable=False)
+			local_ctx["stage_c_preset_dropdown"] = gr.Dropdown(startup_preset_c(), scale=6, label="Load Preset:", value=cap_util.ksampler_presets_stage_c_dropdown[0][1], multiselect=False, filterable=False)
 			local_ctx["stage_c_preset_reload"] = gr.Button("🔄", scale=1)
 			local_ctx["stage_c_preset_reload"].click(reload_preset_c, inputs=None, outputs=[local_ctx["stage_c_preset_dropdown"]], show_progress="hidden")
 		with gr.Accordion(label="Advanced Sampling Settings:", open=False):
@@ -269,7 +277,7 @@ def get_generation_settings_column(global_ctx, local_ctx):
 	with gr.Accordion(label="Refiner Settings:", open=False, elem_id="refiner_settings"):
 		gr.Markdown("These settings are for the Stage B portion of Stable Cascade.\n\nIt's advised that you don't touch these - but if an image seems to come out wrong or has some kind of artifacting, try changing these settings.\n\nYou have been warned.", line_breaks=True)
 		with gr.Row():
-			local_ctx["stage_b_preset_dropdown"] = gr.Dropdown(reload_preset_b(), scale=6, label="Load Preset:", value=cap_util.ksampler_presets_stage_b_dropdown[0][1], multiselect=False, filterable=False)
+			local_ctx["stage_b_preset_dropdown"] = gr.Dropdown(startup_preset_b(), scale=6, label="Load Preset:", value=cap_util.ksampler_presets_stage_b_dropdown[0][1], multiselect=False, filterable=False)
 			local_ctx["stage_b_preset_reload"] = gr.Button("🔄", scale=1)
 			local_ctx["stage_b_preset_reload"].click(reload_preset_b, inputs=None, outputs=[local_ctx["stage_b_preset_dropdown"]])
 		local_ctx["stage_b_seed"] = gr.Number(value=-1, minimum=-1, maximum=2147483647, precision=0, label="Seed:", scale=2, interactive=True)

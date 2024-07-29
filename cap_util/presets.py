@@ -118,7 +118,7 @@ def save_as_new_preset(filename, desc, preset_type, steps, cfg, sampler, schedul
 		"steps": steps,
 		"cfg": cfg,
 		"sampler": sampler,
-		"schedule": schedule,
+		"scheduler": schedule,
 		"description": desc,
 	}
 
