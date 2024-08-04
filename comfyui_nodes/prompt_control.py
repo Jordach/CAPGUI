@@ -241,7 +241,7 @@ def advanced_encode_from_tokens(tokenized, token_normalization, weight_interpret
 # Prompt Control: #
 # # # # # # # # # #
 have_advanced_encode = True
-AVAILABLE_STYLES = ["comfy", "A1111", "compel", "comfy++", "down_weight"]
+AVAILABLE_STYLES = ["comfy", "A1111", "compel", "comfy++", "down_weight", "perp"]
 AVAILABLE_NORMALIZATIONS = ["none", "mean", "length", "length+mean"]
 
 SHUFFLE_GEN = torch.Generator(device="cpu")
