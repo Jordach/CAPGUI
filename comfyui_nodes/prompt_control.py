@@ -241,7 +241,19 @@ def advanced_encode_from_tokens(tokenized, token_normalization, weight_interpret
 # Prompt Control: #
 # # # # # # # # # #
 have_advanced_encode = True
-AVAILABLE_STYLES = ["comfy", "A1111", "compel", "comfy++", "down_weight", "perp"]
+AVAILABLE_STYLES = [
+	"A1111",
+	"A1111+nc",
+	"comfy",
+	"comfy+nc",
+	"comfy++",
+	"comfy++nc",
+	"compel",
+	"compel+nc",
+	"down_weight",
+	"down_weight+nc",
+	"perp"
+]
 AVAILABLE_NORMALIZATIONS = ["none", "mean", "length", "length+mean"]
 
 SHUFFLE_GEN = torch.Generator(device="cpu")
@@ -405,13 +417,15 @@ def encode_prompt(clip, text, default_style="comfy", default_normalization="none
 		for key in tokens:
 			tokens[key].extend(c[key])
 
-	word_count = 0
-	for k in tokens:
-		for ci in range(len(tokens[k])):
-			for i, chunk in enumerate(tokens[k][ci]):
-				if chunk[2] != 0:
-					tokens[k][ci][i] = (chunk[0], chunk[1], chunk[2] + word_count)
-			word_count = max(word_count, max([x for _,_,x in tokens[k][ci]]))
+	# Conditionally modify word count if wanted
+	if not style.endswith("+nc") or style != "perp":
+		word_count = 0
+		for k in tokens:
+			for ci in range(len(tokens[k])):
+				for i, chunk in enumerate(tokens[k][ci]):
+					if chunk[2] != 0:
+						tokens[k][ci][i] = (chunk[0], chunk[1], chunk[2] + word_count)
+				word_count = max(word_count, max([x for _,_,x in tokens[k][ci]]))
 
 	# Non-SDXL has only "l"
 	if "g" in tokens and l_prompts:
