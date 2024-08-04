@@ -201,7 +201,7 @@ def advanced_encode_from_tokens(tokenized, token_normalization, weight_interpret
 	#=====================
 	pooled = None
 
-	if weight_interpretation == "comfy":
+	if weight_interpretation.startswith("comfy") and not weight_interpretation.startswith("comfy++"):
 		weighted_tokens = [[(t,w) for t, w in zip(x, y)] for x, y in zip(tokens, weights)]
 		weighted_emb, pooled_base = encode_func(weighted_tokens)
 		pooled = pooled_base
@@ -209,24 +209,24 @@ def advanced_encode_from_tokens(tokenized, token_normalization, weight_interpret
 		unweighted_tokens = [[(t,1.0) for t, _,_ in x] for x in tokenized]
 		base_emb, pooled_base = encode_func(unweighted_tokens)
 	
-	if weight_interpretation == "A1111":
+	if weight_interpretation.startswith("A1111"):
 		weighted_emb = from_zero(weights, base_emb)
 		weighted_emb = A1111_renorm(base_emb, weighted_emb)
 		pooled = pooled_base
 	
-	if weight_interpretation == "compel":
+	if weight_interpretation.startswith("compel"):
 		pos_tokens = [[(t,w) if w >= 1.0 else (t,1.0) for t, w in zip(x, y)] for x, y in zip(tokens, weights)]
 		weighted_emb, _ = encode_func(pos_tokens)
 		weighted_emb, _, pooled = down_weight(pos_tokens, weights, word_ids, weighted_emb, length, encode_func)
 	
-	if weight_interpretation == "comfy++":
+	if weight_interpretation.startswith("comfy++"):
 		weighted_emb, tokens_down, _ = down_weight(unweighted_tokens, weights, word_ids, base_emb, length, encode_func)
 		weights = [[w if w > 1.0 else 1.0 for w in x] for x in weights]
 		#unweighted_tokens = [[(t,1.0) for t, _,_ in x] for x in tokens_down]
 		embs, pooled = from_masked(unweighted_tokens, weights, word_ids, base_emb, length, encode_func)
 		weighted_emb += embs
 
-	if weight_interpretation == "down_weight":
+	if weight_interpretation.startswith("down_weight"):
 		weights = scale_to_norm(weights, word_ids, w_max)
 		weighted_emb, _, pooled = down_weight(unweighted_tokens, weights, word_ids, base_emb, length, encode_func)
 
@@ -418,7 +418,7 @@ def encode_prompt(clip, text, default_style="comfy", default_normalization="none
 			tokens[key].extend(c[key])
 
 	# Conditionally modify word count if wanted
-	if not style.endswith("+nc") or style != "perp":
+	if not style.endswith("+nc") and style != "perp":
 		word_count = 0
 		for k in tokens:
 			for ci in range(len(tokens[k])):
