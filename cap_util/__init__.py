@@ -582,9 +582,19 @@ def gen_images_websocket(ws, workflow):
 	while True:
 		out = ws.recv()
 		if isinstance(out, str):
-			message = json.loads(out)
+			message = {}
+			# Sometimes the returned data is NULL or some empty value
+			try:
+				message = json.loads(out)
+			except:
+				continue
+
 			if message['type'] == 'executing':
 				data = message['data']
+				# Wait for message, ensures txt2img, img2img and inpainting queues don't get mixed
+				if "prompt_id" not in data:
+					continue
+				
 				if data['prompt_id'] == prompt_id:
 					if data['node'] is None:
 						break #Execution is done
