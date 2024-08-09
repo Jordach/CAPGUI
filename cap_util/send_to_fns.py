@@ -77,7 +77,7 @@ def process_params():
 			c_rescale = params["c_rescale"]
 		if "c_sampler" in params:
 			c_sampler = params["c_sampler"]
-		if "c_schdule" in params:
+		if "c_schedule" in params:
 			c_schedule = params["c_schedule"]
 		if "shift" in params:
 			shift = params["shift"]
@@ -90,7 +90,7 @@ def process_params():
 			b_cfg = params["b_cfg"]
 		if "b_sampler" in params:
 			b_sampler = params["b_sampler"]
-		if "b_schdule" in params:
+		if "b_schedule" in params:
 			b_schedule = params["b_schedule"]
 		
 		return pos, neg, width, height, compression, acf, batch, batch_id, c_steps, c_seed, c_cfg, shift, b_steps, b_seed, b_cfg, c_sampler, c_schedule, b_sampler, b_schedule, c_rescale
