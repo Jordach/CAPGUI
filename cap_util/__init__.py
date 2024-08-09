@@ -392,28 +392,87 @@ def scan_for_comfy_models():
 	global gui_default_settings
 	if not os.path.exists(gui_default_settings["comfy_path"]):
 		return ["RESCAN MODELS"], ["RESCAN MODELS"], ["RESCAN MODELS"]
-	
-	clip_folder   = os.path.join(gui_default_settings["comfy_path"], "models", "clip", "cascade")
-	unet_folder_b = os.path.join(gui_default_settings["comfy_path"], "models", "unet", "cascade", "stage_b")
-	unet_folder_c = os.path.join(gui_default_settings["comfy_path"], "models", "unet", "cascade", "stage_c")
+
+	comfy_path = gui_default_settings["comfy_path"]
+	comfy_base_model_path = os.path.join(comfy_path, "models")
+
+	clip_folders   = [os.path.join(comfy_base_model_path, "clip", "cascade")]
+	unet_folders_b = [os.path.join(comfy_base_model_path, "unet", "cascade", "stage_b")]
+	unet_folders_c = [os.path.join(comfy_base_model_path, "unet", "cascade", "stage_c")]
+
+	# the root paths of the models that ComfyUI searches
+	models_paths = [
+		os.path.join(comfy_base_model_path, folder) for folder in ("clip", "unet")
+	]
+
+	# load additional path from extra_model_paths.yaml
+	extra_model_paths_file_path = os.path.join(
+		comfy_path, "extra_model_paths.yaml")
+	if os.path.exists(extra_model_paths_file_path):
+		with open(extra_model_paths_file_path) as extra_model_paths_file:
+			extra_model_paths = yaml.safe_load(extra_model_paths_file)
+			for extra_paths in extra_model_paths.values():
+				if "base_path" in extra_paths:
+					extra_base_path = extra_paths["base_path"]
+					if "clip" in extra_paths:
+						# support pipe (|) syntax to specify multiple models
+						extra_clip_folders = extra_paths["clip"].split("\n")
+						for extra_clip_folder in extra_clip_folders:
+							extra_clip_folder_path = os.path.join(extra_base_path,
+								extra_clip_folder)
+							extra_cascade_clip_folder_path = os.path.join(extra_clip_folder_path,
+								"cascade")
+							models_paths.append(extra_clip_folder_path)
+							if os.path.exists(extra_cascade_clip_folder_path):
+								clip_folders.append(extra_cascade_clip_folder_path)
+					if "unet" in extra_paths:
+						# support pipe (|) syntax to specify multiple models
+						extra_unet_folders = extra_paths["unet"].split("\n")
+						for extra_unet_folder in extra_unet_folders:
+							extra_unet_folder_path = os.path.join(extra_base_path,
+								extra_unet_folder)
+							extra_stage_b_folder = os.path.join(extra_unet_folder_path, "cascade",
+								"stage_b")
+							extra_stage_c_folder = os.path.join(extra_unet_folder_path, "cascade",
+								"stage_c")
+							models_paths.append(extra_unet_folder_path)
+							if os.path.exists(extra_stage_b_folder):
+								unet_folders_b.append(extra_stage_b_folder)
+							if os.path.exists(extra_stage_c_folder):
+								unet_folders_c.append(extra_stage_c_folder)
+
+				else:
+					continue
 
 	clip_models = []
-	for (root, dir, models) in os.walk(clip_folder):
-		for model in models:
-			if os.path.splitext(model)[1].lower() == ".safetensors":
-				clip_models.append(f"cascade/{model}")
+	for clip_folder in clip_folders:
+		for (root, dir, models) in os.walk(clip_folder):
+			for model in models:
+				if os.path.splitext(model)[1].lower() == ".safetensors":
+					for models_path in models_paths:
+						found_model_path = f"{root}/{model}"
+						if models_path in found_model_path:
+							clip_models.append(os.path.relpath(found_model_path, start=models_path))
 
 	stage_b_models = []
-	for (root, dir, models) in os.walk(unet_folder_b):
-		for model in models:
-			if os.path.splitext(model)[1].lower() == ".safetensors":
-				stage_b_models.append(f"cascade/stage_b/{model}")
+	for unet_folder_b in unet_folders_b:
+		for (root, dir, models) in os.walk(unet_folder_b):
+			for model in models:
+				if os.path.splitext(model)[1].lower() == ".safetensors":
+					for models_path in models_paths:
+						found_model_path = f"{root}/{model}"
+						if models_path in found_model_path:
+							stage_b_models.append(os.path.relpath(found_model_path, start=models_path))
 
 	stage_c_models = []
-	for (root, dir, models) in os.walk(unet_folder_c):
-		for model in models:
-			if os.path.splitext(model)[1].lower() == ".safetensors":
-				stage_c_models.append(f"cascade/stage_c/{model}")
+	for unet_folder_c in unet_folders_c:
+		for (root, dir, models) in os.walk(unet_folder_c):
+			for model in models:
+				if os.path.splitext(model)[1].lower() == ".safetensors":
+					for models_path in models_paths:
+						found_model_path = f"{root}/{model}"
+						if models_path in found_model_path:
+							stage_c_models.append(os.path.relpath(found_model_path, start=models_path))
 	return clip_models, stage_b_models, stage_c_models
 
 def search_for_csvs():
