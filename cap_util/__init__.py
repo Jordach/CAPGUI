@@ -269,6 +269,7 @@ import shutil
 import base64
 import math
 import hashlib
+import pyperclip
 from cap_util.metadata import save_image_with_meta
 from cap_util.gui_xy import process_xy_images
 from cap_util.wildcards import read_and_apply_wildcards
@@ -428,6 +429,24 @@ def search_for_csvs():
 	valid_csvs.append(("Scan for new CSVs.", "updating_the.csv"))
 	
 	return valid_csvs
+
+def pil_image_to_clipboard(image):
+	buf = io.BytesIO()
+	image.save(buf, format="png", compression=4)
+	data = buf.getvalue()
+	pyperclip.copy(data)
+
+	gr.Info("Image copied to clipboard!")
+
+def clipboard_to_pil_image():
+	data = pyperclip.paste()
+	try:
+		buf = io.BytesIO(data.encode("latin1"))
+		image = Image.open(buf)
+		return image
+	except:
+		gr.Info("Contents of pasted data isn't an image.")
+		return None
 
 def image_to_b64(image):
 	bytes_buffer = io.BytesIO()
@@ -594,7 +613,7 @@ def gen_images_websocket(ws, workflow):
 				# Wait for message, ensures txt2img, img2img and inpainting queues don't get mixed
 				if "prompt_id" not in data:
 					continue
-				
+
 				if data['prompt_id'] == prompt_id:
 					if data['node'] is None:
 						break #Execution is done

@@ -2,3 +2,7 @@ gradio==4.31
 websocket-client
 pillow
 requests
+extcolors
+matplotlib
+numpy
+pyperclip

@@ -50,6 +50,10 @@ def add_data_to_pixels(image, text, mode='alpha', compressed=False):
 
 	return image
 
+def save_image_no_meta(image, path):
+	img = image.convert("RGBA")
+	img.save(path, compression=4)
+
 def save_image_with_meta(image, workflow, text, path):
 	img = image.convert("RGBA")
 
