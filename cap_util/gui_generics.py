@@ -34,7 +34,7 @@ def startup_preset_c():
 
 def reload_preset_c():
 	presets.load_all_user_presets(c=True)
-	return gr.Dropdown(choices=cap_util.ksampler_presets_stage_c_dropdown, value=cap_util.ksampler_presets_stage_c_dropdown[0])
+	return gr.Dropdown(choices=cap_util.ksampler_presets_stage_c_dropdown, value=cap_util.ksampler_presets_stage_c_dropdown[0][1])
 
 def load_preset_settings_c(preset):
 	settings = cap_util.ksampler_presets_stage_c[preset]
@@ -49,7 +49,7 @@ def startup_preset_b():
 
 def reload_preset_b():
 	presets.load_all_user_presets(b=True)
-	return gr.Dropdown(choices=cap_util.ksampler_presets_stage_b, value=cap_util.ksampler_presets_stage_b_dropdown[0])
+	return gr.Dropdown(choices=cap_util.ksampler_presets_stage_b_dropdown, value=cap_util.ksampler_presets_stage_b_dropdown[0][1])
 
 def load_preset_settings_b(preset):
 	settings = cap_util.ksampler_presets_stage_b[preset]
