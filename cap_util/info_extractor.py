@@ -43,7 +43,7 @@ def handle_auto1111(params):
 			neg = ""
 
 		pos = params[:prompt_index[0]]
-		return pos, neg
+		return f"STYLE(A1111) {pos}", f"STYLE(A1111) {neg}"
 	elif params:
 		# has a negative:
 		if "Negative prompt:" in params:
@@ -54,7 +54,7 @@ def handle_auto1111(params):
 			neg = ""
 		
 		pos = params[:prompt_index[0]]
-		return pos, neg
+		return f"STYLE(A1111) {pos}", f"STYLE(A1111) {neg}"
 	else:
 		return "", ""
 
@@ -256,18 +256,31 @@ def get_image_info(i):
 	return prompt, negative
 
 import gradio as gr
-def read_infodict_from_image(image):
+def read_infodict_from_image(image, safe_resize):
 	# Try reading parameters first from other GUIs:
 	prompt, negative = get_image_info(image)
 	width, height = image.size
 
 	if prompt != "" or negative != "":
+		# Only apply resizing to non CAPGUI metadata images
+		if safe_resize:
+			s_edge = min(width, height)
+			l_edge = max(width, height)
+			ratio = l_edge/s_edge
+
+			if width == s_edge:
+				width = 1024
+				height = int(((1024 * ratio) // 32) * 32)
+			else:
+				width = int(((1024 * ratio) // 32) * 32)
+				height = 1024
+
 		infotext, infodict = cap_util.create_infotext_objects(prompt, negative, width, height, markdown=True)
 		return infotext, infodict
 	# Try reading stealth PNG:
 	else:
 		alpha_data = read_info_from_image_alpha(image)
-		# Try loading the string as JSON data - on exception load Auto1111 style meta
+		# Try loading the string as JSON data - on exception try loading Auto1111 style meta
 		try:
 			infodict = json.loads(alpha_data)
 			# Handle older CAPGUI json data that predate the sampler/scheduler settings
@@ -287,6 +300,18 @@ def read_infodict_from_image(image):
 			try:
 				prompt, negative = handle_auto1111(alpha_data)
 				if prompt != "" or negative != "":
+					# Only apply resizing to non CAPGUI metadata images
+					if safe_resize:
+						s_edge = min(width, height)
+						l_edge = max(width, height)
+						ratio = l_edge/s_edge
+
+						if width == s_edge:
+							width = 1024
+							height = int(((1024 * ratio) // 32) * 32)
+						else:
+							width = int(((1024 * ratio) // 32) * 32)
+							height = 1024
 					infotext, infodict = cap_util.create_infotext_objects(prompt, negative, width, height, markdown=True)
 					return infotext, infodict
 				# Handle older CAPGUI stealth PNG data

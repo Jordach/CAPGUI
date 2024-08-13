@@ -70,9 +70,9 @@ def handle_palette_image(file, blur):
 	except:
 		return None
 
-def handle_image_upload(file):
+def handle_image_upload(file, safe_resize):
 	image = Image.open(file)
-	infotext, infodict = info_extractor.read_infodict_from_image(image)
+	infotext, infodict = info_extractor.read_infodict_from_image(image, safe_resize)
 	return infotext, json.dumps(infodict), image.copy()
 
 def send_to_tab_special(dropdown, image_json, image, random_seeds):
@@ -92,6 +92,7 @@ def tools_tab(global_ctx, local_ctx):
 							local_ctx["send_to_dropdown"] = gui_generics.get_send_to_dropdown(global_ctx)
 						with gr.Column():
 							local_ctx["send_to_randomise_seed"] = gr.Checkbox(False, label="Randomise Seeds?")
+							local_ctx["send_to_safe_resize"] = gr.Checkbox(True, label="Use Aspect Ratio for A1111/Other Images?")
 					local_ctx["send_to_button"] = gui_generics.get_send_to_button()
 					local_ctx["image_json"] = gr.Markdown("", visible=False, label="Generation JSON:")
 
@@ -129,7 +130,7 @@ def tools_tab_post_hook(global_ctx, local_ctx):
 	# Metadata Reader:
 	local_ctx["image_reader"].upload(
 		handle_image_upload,
-		inputs=[local_ctx["image_reader"]],
+		inputs=[local_ctx["image_reader"], local_ctx["send_to_safe_resize"]],
 		outputs = [local_ctx["image_infotext"], local_ctx["image_json"], local_ctx["image_viewer"]]
 	)
 	
