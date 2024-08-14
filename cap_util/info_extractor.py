@@ -277,10 +277,10 @@ def read_infodict_from_image(image, safe_resize):
 
 		infotext, infodict = cap_util.create_infotext_objects(prompt, negative, width, height, markdown=True)
 		return infotext, infodict
-	# Try reading stealth PNG:
 	else:
+		# Try reading stealth PNG:
 		alpha_data = read_info_from_image_alpha(image)
-		# Failure
+		# Failure, no stealth PNG found:
 		if len(alpha_data) == 0 or alpha_data is None:
 			return "No metadata contained within given image.", {}
 
