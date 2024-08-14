@@ -280,6 +280,10 @@ def read_infodict_from_image(image, safe_resize):
 	# Try reading stealth PNG:
 	else:
 		alpha_data = read_info_from_image_alpha(image)
+		# Failure
+		if len(alpha_data) == 0 or alpha_data is None:
+			return "No metadata contained within given image.", {}
+
 		# Try loading the string as JSON data - on exception try loading Auto1111 style meta
 		try:
 			infodict = json.loads(alpha_data)
@@ -324,3 +328,4 @@ def read_infodict_from_image(image, safe_resize):
 				infotext = alpha_data
 				infodict = {}
 				return infotext, infodict
+	
