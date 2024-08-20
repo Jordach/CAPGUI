@@ -93,7 +93,7 @@ def get_prompt_row(global_ctx, local_ctx, prompt_scale, extra_buttons_fn=dummy_p
 			extra_buttons_fn(global_ctx, local_ctx)
 
 def get_generation_settings_column(global_ctx, local_ctx):
-	with gr.Accordion(label="Base Settings:", open=False, elem_id="base_settings"):
+	with gr.Accordion(label="Base Settings:", open=True, elem_id="base_settings"):
 		with gr.Column():
 			with gr.Row():
 				local_ctx["stage_c_steps"] = gr.Slider(

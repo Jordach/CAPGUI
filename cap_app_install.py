@@ -59,12 +59,9 @@ elif args.gradio:
 			with gr.Column():
 				casc_1b = gr.Checkbox(False, label="Stable Cascade 1B (3.3 GB Download)")
 				casc_3b = gr.Checkbox(False, label="Stable Cascade 3.6B (8.3 GB Download)")
-			gr.Markdown("## Resonance Prototype Delta/Epsilon:")
+			gr.Markdown("## Resonance R1:")
 			with gr.Column():
-				reso_proto = gr.Checkbox(False, label="Resonance Prototypes Delta + Epsilon")
-			gr.Markdown("Custom Base Models Coming Soon.")
-			with gr.Column():
-				reso_1b = gr.Checkbox(False, label="Resonance R1 1B (3.3 GB Download)", interactive=False)
+				reso_1b = gr.Checkbox(False, label="Resonance R1 1B (3.3 GB Download)", interactive=True)
 				reso_3b = gr.Checkbox(False, label="Resonance R1 3.6B (8.3 GB Download)", interactive=False)
 			gr.Markdown("# Refiner Models:\n\nThe only difference between Refiner Large and Refiner Lite is that Refiner Large takes twice as long compared to Refiner Lite for not much difference in overall performance.")
 			with gr.Column():
@@ -123,13 +120,12 @@ elif args.gradio:
 			outputs=[validate_status, download_models_accord]
 		)
 
-		def download_comfyui_models(c1b, c3b, res1b, res3b, reflite, refxl, cnet, encoders, respro):
+		def download_comfyui_models(c1b, c3b, res1b, res3b, reflite, refxl, cnet, encoders):
 			choices = {
 				"stage_c_big":  c1b,
 				"stage_c_lite": c3b,
-				"reso_c_proto": respro,
-				"reso_c_big":   res1b,
-				"reso_c_lite":  res3b,
+				"reso_r1_huge":   res1b,
+				"reso_r1_lite":  res3b,
 				"stage_b_big":  refxl,
 				"stage_b_lite": reflite,
 				"controlnet":   cnet,
@@ -148,8 +144,7 @@ elif args.gradio:
 
 		start_download.click(download_comfyui_models, inputs=[
 			casc_1b, casc_3b, reso_1b, reso_3b,
-			ref_lite, ref_large, cn_models, encoder_models,
-			reso_proto
+			ref_lite, ref_large, cn_models, encoder_models
 		])
 		def exit_gradio_hook():
 			gr.Info("You may safely exit this tab now.")
