@@ -124,8 +124,8 @@ elif args.gradio:
 			choices = {
 				"stage_c_big":  c1b,
 				"stage_c_lite": c3b,
-				"reso_r1_huge":   res1b,
-				"reso_r1_lite":  res3b,
+				"reso_r1_huge": res1b,
+				"reso_r1_lite": res3b,
 				"stage_b_big":  refxl,
 				"stage_b_lite": reflite,
 				"controlnet":   cnet,

@@ -31,7 +31,7 @@ gui_default_settings = {
 	"cap_login_expiry": "unauthenticated",
 
 	# Generation Settings
-	"gen_compression": 42,
+	"gen_compression": 32,
 
 	"gen_batch_size": 1,
 	"gen_batch_size_min": 1,
