@@ -331,7 +331,7 @@ def get_gallery_column(global_ctx, local_ctx, gallery_height="70vh", add_send_to
 	local_ctx["gallery"] = gr.Gallery(
 		allow_preview=True, preview=True, show_download_button=True, object_fit="contain", 
 		show_label=False, label=None, elem_id=f"{local_ctx['__tab_name__']}_gallery", height=gallery_height,
-		interactive=False,
+		interactive=False, format="png"
 	)
 	with gr.Accordion(label="Generation Info:", open=True):
 		local_ctx["gen_info_box"] = gr.Markdown("", line_breaks=True)
