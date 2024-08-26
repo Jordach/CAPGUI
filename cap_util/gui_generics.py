@@ -181,7 +181,7 @@ def get_generation_settings_column(global_ctx, local_ctx):
 				local_ctx["stage_c_compression"] = gr.Slider(
 					minimum=16,
 					maximum=80,
-					info="The recommended default compression factor is 42. Automatic Compression Finder will find the compression factor that results in the best quality for your resolution. When compression reaches 80, higher resolutions can become unstable.",
+					info="The recommended default compression factor is 32. Automatic Compression Finder will find the compression factor that results in the best quality for your resolution. When compression reaches 80, higher resolutions can become unstable.",
 					value=cap_util.gui_default_settings["gen_compression"],
 					step=1, scale=3,
 					label="Compression:", interactive=True
