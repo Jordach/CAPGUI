@@ -8,6 +8,7 @@ from io import BytesIO
 import base64
 
 from .prompt_control import ScheduleToCond, ScheduleToModel, PromptToSchedule
+from .stage_c_patcher import PatchStageCEmbeddings
 
 class UNETLoaderCAP:
 	@classmethod
@@ -73,6 +74,7 @@ NODE_CLASS_MAPPINGS = {
 	"ScheduleToCondCAPGUI": ScheduleToCond,
 	"ScheduleToModelCAPGUI": ScheduleToModel,
 	"PromptToScheduleCAPGUI": PromptToSchedule,
+	# "StageCCondPatcher": PatchStageCEmbeddings,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
@@ -82,4 +84,5 @@ NODE_DISPLAY_NAME_MAPPINGS = {
 	"ScheduleToCondCAPGUI": "CAPGUI Schedule To Conditioning",
 	"ScheduleToModelCAPGUI": "CAPGUI Schedule To Model",
 	"PromptToScheduleCAPGUI": "CAPGUI Prompt To Schedule",
+	# "StageCCondPatcher": "Patch Stage C Cond Token Extension"
 }
