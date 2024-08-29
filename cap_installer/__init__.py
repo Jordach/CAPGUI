@@ -145,7 +145,7 @@ def download_reso_models(models_dict, use_gradio):
 		if not os.path.isfile(reso_r1_clip):
 			download_single_model(reso_r1_clip, "https://cdn.spectrometer.art/resonance_r1_final_te.safetensors", use_gradio)
 		if not os.path.isfile(reso_r1_lite):
-			download_single_model(reso_r1_lite, "https://cdn.spectrometer.art/resonance_lite_r1_e12.safetensors", use_gradio)
+			download_single_model(reso_r1_lite, "https://cdn.spectrometer.art/resonance_lite_r1_e13.safetensors", use_gradio)
 
 		print_or_Info(use_gradio, status_messages["dl_done_reso_lite"])
 	
