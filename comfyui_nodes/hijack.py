@@ -92,7 +92,7 @@ def hijack_ksampler(module, cls):
 				last_step,
 				force_full_denoise,
 				denoise_mask,
-				sigmas,
+				sigmas.to(comfy.model_management.get_torch_device()),
 				callback,
 				disable_pbar,
 				seed,
