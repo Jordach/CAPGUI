@@ -33,10 +33,10 @@ def cosine_scheduler(model_sampling, steps):
 
 # Wrapper functions for schedulers that are not directly using two function arguments
 def karras_wrapper(model_sampling, steps):
-	return comfy.k_diffusion_sampling.get_sigmas_karras(n=steps, sigma_min=float(model_sampling.sigma_min), sigma_max=float(model_sampling.sigma_max))
+	return comfy.k_diffusion.sampling.get_sigmas_karras(n=steps, sigma_min=float(model_sampling.sigma_min), sigma_max=float(model_sampling.sigma_max))
 
 def exponential_wrapper(model_sampling, steps):
-	return comfy.k_diffusion_sampling.get_sigmas_exponential(n=steps, sigma_min=float(model_sampling.sigma_min), sigma_max=float(model_sampling.sigma_max))
+	return comfy.k_diffusion.sampling.get_sigmas_exponential(n=steps, sigma_min=float(model_sampling.sigma_min), sigma_max=float(model_sampling.sigma_max))
 
 def sgm_wrapper(model_sampling, steps):
 	return comfy.samplers.normal_scheduler(model_sampling, steps, sgm=True)
