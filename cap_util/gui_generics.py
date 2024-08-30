@@ -303,7 +303,7 @@ def get_generation_settings_column(global_ctx, local_ctx):
 			local_ctx["stage_b_preset_desc"] = gr.Textbox(value="", lines=1, max_lines=1, placeholder="My Custom Label", label="Preset Label:", scale=3)
 		with gr.Row():
 			local_ctx["stage_b_sampler"] = gr.Dropdown(cap_util.ksampler_samplers, value=cap_util.ksampler_samplers[0][1], label="Denoising Sampler:")
-			local_ctx["stage_b_scheduler"] = gr.Dropdown(cap_util.ksampler_schedules, value=cap_util.ksampler_schedules[0][1], label="Denoising Schedule:")
+			local_ctx["stage_b_scheduler"] = gr.Dropdown(cap_util.ksampler_schedules, value=cap_util.ksampler_schedules[1][1], label="Denoising Schedule:")
 		local_ctx["stage_b_preset_dropdown"].input(load_preset_settings_b, inputs=[local_ctx["stage_b_preset_dropdown"]], 
 			outputs=[local_ctx["stage_b_sampler"], local_ctx["stage_b_scheduler"], local_ctx["stage_b_steps"], local_ctx["stage_b_cfg"]], show_progress="None"
 		)
