@@ -55,7 +55,7 @@ def new_calculate_sigmas(model_sampling, scheduler_name, steps):
 		return sigmas
 
 # Avoid overwriting at start-up
-if getattr(comfy.samplers, "SCHEDULER_FUNCS", default=None) is None:
+if getattr(comfy.samplers, "SCHEDULER_FUNCS", __default=None) is None:
 	setattr(comfy.samplers, "SCHEDULER_FUNCS", {})
 	comfy.samplers.SCHEDULER_FUNCS["normal"]         = comfy.samplers.normal_scheduler
 	comfy.samplers.SCHEDULER_FUNCS["karras"]         = karras_wrapper
