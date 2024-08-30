@@ -169,6 +169,7 @@ ksampler_samplers = [
 ]
 
 ksampler_schedules = [
+	("Cosine", "cosine_cascade"),
 	("Simple", "simple"),
 	("Normal", "normal"),
 	("Karras", "karras"),
@@ -181,7 +182,7 @@ ksampler_schedules = [
 ksampler_presets_stage_c = {}
 ksampler_presets_stage_c["builtin_basic"] = {
 	"sampler": "euler_ancestral",
-	"scheduler": "simple",
+	"scheduler": "cosine_cascade",
 	"steps": 20,
 	"cfg": 7,
 	"shift": 2,

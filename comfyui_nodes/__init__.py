@@ -6,9 +6,60 @@ from PIL import Image
 import numpy as np
 from io import BytesIO
 import base64
+import logging
 
 from .prompt_control import ScheduleToCond, ScheduleToModel, PromptToSchedule
-from .stage_c_patcher import PatchStageCEmbeddings
+
+def cosine_scheduler(model_sampling, steps):
+	s = model_sampling
+	sigs = []
+	# This stops it blowing things out at the start of sampling
+	# but decays linearly to allow normal cosine sampling after a few steps
+	doffset = 0.25
+	dmin = 1
+	dmax = 1 + doffset
+	dpct = 4
+	for x in range(steps):
+		cos = (-0.5 * (1 + math.cos(math.pi * x / (steps - 1)))) + 1
+		ind = int(cos * (len(s.sigmas) - 1))
+
+		div = dmin if x == 0 else dmax
+		if x != 0:
+			div -= doffset * ((x-1) / (max((steps//dpct), 1)))
+			#print((x-1) / (max((steps//dpct), 1)), max(min(div, dmax), dmin))
+		sigs += [float(s.sigmas[-(1+ind)]) / max(min(div, dmax), dmin)]
+	sigs += [0.0]
+	return torch.FloatTensor(sigs)
+
+# Wrapper functions for schedulers that are not directly using two function arguments
+def karras_wrapper(model_sampling, steps):
+	return comfy.k_diffusion_sampling.get_sigmas_karras(n=steps, sigma_min=float(model_sampling.sigma_min), sigma_max=float(model_sampling.sigma_max))
+
+def exponential_wrapper(model_sampling, steps):
+	return comfy.k_diffusion_sampling.get_sigmas_exponential(n=steps, sigma_min=float(model_sampling.sigma_min), sigma_max=float(model_sampling.sigma_max))
+
+def sgm_wrapper(model_sampling, steps):
+	return comfy.samplers.normal_scheduler(model_sampling, steps, sgm=True)
+
+# Flexible extensible schedulers for normal KSamplers
+comfy.samplers.SCHEDULER_NAMES.append("cosine_cascade")
+setattr(comfy.samplers, "SCHEDULER_FUNCS", {})
+comfy.samplers.SCHEDULER_FUNCS["normal"]         = comfy.samplers.normal_scheduler
+comfy.samplers.SCHEDULER_FUNCS["karras"]         = karras_wrapper
+comfy.samplers.SCHEDULER_FUNCS["exponential"]    = exponential_wrapper
+comfy.samplers.SCHEDULER_FUNCS["sgm_uniform"]    = sgm_wrapper
+comfy.samplers.SCHEDULER_FUNCS["simple"]         = comfy.samplers.simple_scheduler
+comfy.samplers.SCHEDULER_FUNCS["ddim_uniform"]   = comfy.samplers.ddim_scheduler
+comfy.samplers.SCHEDULER_FUNCS["beta"]           = comfy.samplers.beta_scheduler
+comfy.samplers.SCHEDULER_FUNCS["cosine_cascade"] = cosine_scheduler
+
+# Patch the calculate sigmas function wholesale
+def new_calculate_sigmas(model_sampling, scheduler_name, steps):
+	if scheduler_name not in comfy.samplers.SCHEDULER_FUNCS:
+		logging.error("error invalid scheduler {}".format(scheduler_name))
+	else:
+		return comfy.samplers.SCHEDULER_FUNCS[scheduler_name](model_sampling, steps)
+setattr(comfy.samplers, "calculate_sigmas", new_calculate_sigmas)
 
 class UNETLoaderCAP:
 	@classmethod
