@@ -28,7 +28,7 @@ def cosine_scheduler(model_sampling, steps):
 		if x != 0:
 			div -= doffset * ((x-1) / (max((steps//dpct), 1)))
 			#print((x-1) / (max((steps//dpct), 1)), max(min(div, dmax), dmin))
-		sigma = s.sigmas[-(1+ind)].item() / div
+		sigma = s.sigmas[-(1+ind)].item() / max(min(div, dmax), dmin)
 		sigs += [sigma]
 	sigs += [0.0]
 	
