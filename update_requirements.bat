@@ -38,7 +38,7 @@ goto :show_stdout_stderr
 set PYTHON="%VENV_DIR%\Scripts\Python.exe"
 echo venv %PYTHON%
 
-%PYTHON% -m pip install -r requirements.txt
+%PYTHON% -m pip install -U -r requirements.txt
 pause
 exit /b
 
