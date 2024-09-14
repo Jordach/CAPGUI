@@ -5,6 +5,10 @@ from cap_gui import txt, img, inpainting, tools, donate, settings
 import websocket
 import uuid
 import gradio as gr
+from packaging import version
+# Do not start up with older Gradio versions
+if version.parse(gr.__version__) < version.parse("4.42"):
+	raise ValueError("Your installed version of Gradio is too old, please update Gradio via updates_requirements.bat or running ' pip install -r requirements.txt ' inside this directory. Sorry about that.")
 
 from cap_gui import topbar
 

@@ -4,6 +4,7 @@ import cap_util
 from cap_util import gui_generics, send_to_fns, gui_xy
 from cap_util.wildcards import read_and_apply_wildcards
 from PIL import Image
+import time
 
 def txt2img_tab(global_ctx, local_ctx):
 	gui_generics.get_prompt_row(global_ctx, local_ctx, 6)
@@ -30,7 +31,7 @@ def process_generate_button(
 	tab_src = "txt2img"
 	if xy_x_type != 'None' or xy_y_type != 'None':
 		img, info, infodict = gui_xy.process_xy_images(
-			tab_src, pos, neg, c_steps, c_seed, width, height,
+			tab_src+"_grid", pos, neg, c_steps, c_seed, width, height,
 			c_cfg, batch, compression, shift, latent_id,
 			b_seed, b_cfg, b_steps, stage_b, stage_c,
 			clip, backend, use_hq_stage_a, save_images,
@@ -62,14 +63,16 @@ def process_generate_button(
 			temp_images.append(img)
 			b_imgs.append(img)
 
+		info += f" (Original Batch)\n"
 		yield images, info, infodict
 		
 		w, h = int(img.width * hr_resize), int(img.height * hr_resize)
-		step = cap_util.gui_default_settings["gen_size_step"]
+		step = 32
 		w = (w // step) * step
 		h = (h // step) * step
 
 		gr.Info("Running Hi-Res Fix / Refining Pass, this may take a while.")
+		timer_start = time.time()
 		all_hr = []
 		for b_img in b_imgs:
 			hr_images, hr_info, hr_infodict = cap_util.process_basic_img2img(
@@ -82,7 +85,12 @@ def process_generate_button(
 			temp_images.extend(hr_images)
 			all_hr.extend(hr_images)
 			yield temp_images, info, infodict
-
+		
+		if batch > 1:
+			timer_finish_avg = f"{(time.time()-timer_start)/batch:.2f}"
+			info += f"Hi-Res Fix / Refining Pass Average Time: **{timer_finish_avg}s**\n"
+		timer_finish_total = f"{time.time()-timer_start:.2f}"
+		info += f"Hi-Res Fix / Refining Pass Total Time: **{timer_finish_total}s**"
 		all_images = []
 		if hr_show:
 			all_images.extend(images)
@@ -90,7 +98,7 @@ def process_generate_button(
 		yield all_images, info, infodict
 	else:
 		yield cap_util.process_basic_txt2img(
-			"txt2img_grid", pos, neg, c_steps, c_seed, width, height,
+			tab_src, pos, neg, c_steps, c_seed, width, height,
 			c_cfg, batch, compression, shift, latent_id,
 			b_seed, b_cfg, b_steps, stage_b, stage_c,
 			clip, backend, use_hq_stage_a, save_images,

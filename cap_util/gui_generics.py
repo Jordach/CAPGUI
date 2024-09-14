@@ -12,6 +12,24 @@ def dummy_post_hook(global_ctx, local_ctx):
 def set_rand_seed():
 	return -1
 
+def get_image_resize_dims(ow, oh, ratio):
+	w, h = int(ow * ratio), int(oh * ratio)
+	step = 32
+	w = (w // step) * step
+	h = (h // step) * step
+	return w, h
+
+def get_hires_resize_info(w, h, ratio, compression):
+	nw, nh = get_image_resize_dims(w, h, ratio)
+	return f"Image Size: {nw}x{nh}px | Latent Size: {nw//compression}x{nh//compression}"
+
+def auto_expand_hires_box(checkbox):
+	if checkbox:
+		return gr.Accordion(open=True)
+	else:
+		# Don't change it
+		return gr.Accordion()
+
 def send_to_targets(global_ctx, current_tab):
 	# Get a list of tabs used for generation
 	known_tabs = global_ctx.keys()
@@ -316,8 +334,14 @@ def get_generation_settings_column(global_ctx, local_ctx):
 		local_ctx["use_stage_a_hq"] = gr.Checkbox(True, label="Use High Quality Decoder?", info="Uses a custom finetune of Stage A to decode latents with less overall blur.")
 		if local_ctx["__tab_name__"] == "txt2img":
 			local_ctx["hi_res_enabled"] = gr.Checkbox(False, label="Enable Hi-Res Fix / Refining Pass?")
-			with gr.Accordion(label="Hi-Res Fix / Refining Pass Settings", open=False, elem_id="hi_res_fix"):
+			local_ctx["hi_res_accordion"] = gr.Accordion(label="Hi-Res Fix / Refining Pass Settings", open=False, elem_id="hi_res_fix")
+			local_ctx["hi_res_enabled"].change(
+				auto_expand_hires_box,
+				inputs=[local_ctx["hi_res_enabled"]], outputs=[local_ctx["hi_res_accordion"]], show_progress=False, queue=False
+			)
+			with local_ctx["hi_res_accordion"]:
 				with gr.Column():
+					local_ctx["hi_res_image_info"] = gr.Textbox("N/A", label="Hi-Res Fix / Refining Pass Resolution:", lines=1, max_lines=1, interactive=False)
 					local_ctx["hi_res_resize"] = gr.Slider(
 						minimum=0.1, maximum=10, step=0.01, value=1, label="Resize by Multiplier:", interactive=True,
 						info="Raise this value by 0.15-0.2 if denoise isn't strong enough."
@@ -326,6 +350,16 @@ def get_generation_settings_column(global_ctx, local_ctx):
 						minimum=32, maximum=80, value=32,
 						step=1, label="Second Pass Compression:",
 						info="Best left at 32 for Hi-Res Fix."
+					)
+					local_ctx["hi_res_resize"].change(
+						get_hires_resize_info,
+						inputs=[local_ctx["stage_c_width"], local_ctx["stage_c_height"], local_ctx["hi_res_resize"], local_ctx["hi_res_compression"]],
+						outputs=[local_ctx["hi_res_image_info"]], show_progress=False, queue=False
+					)
+					local_ctx["hi_res_compression"].change(
+						get_hires_resize_info,
+						inputs=[local_ctx["stage_c_width"], local_ctx["stage_c_height"], local_ctx["hi_res_resize"], local_ctx["hi_res_compression"]],
+						outputs=[local_ctx["hi_res_image_info"]], show_progress=False, queue=False
 					)
 					local_ctx["hi_res_denoise"] = gr.Slider(
 						minimum=0, maximum=1, value=0.2, step=0.01, label="Denoise Strength:",

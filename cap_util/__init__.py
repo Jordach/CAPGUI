@@ -632,7 +632,7 @@ def gen_images_websocket(ws, workflow):
 
 tab_sources = {
 	"txt2img":      "Text to Image",
-	"txt2img_grid": "Text to Image",
+	"txt2img_grid": "Text to Image (Grid)",
 	"img2img":      "Image to Image",
 	"inpainting":   "Inpainting",
 }
