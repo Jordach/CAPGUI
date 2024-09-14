@@ -920,11 +920,6 @@ def process_basic_inpaint(
 		workflow["129"]["inputs"]["base64_image"] = image_to_b64(resized_image)
 		workflow["130"]["inputs"]["base64_image"] = image_to_b64(resized_mask)
 
-	# Stage B bugfix:
-	workflow["1008"]["inputs"]["width"] = output_width
-	workflow["1008"]["inputs"]["height"] = output_height
-	workflow["1008"]["inputs"]["compression"] = compression
-
 	# CLIP and Stage C UNET:
 	workflow["74"]["inputs"]["unet_name"] = stage_c
 	workflow["75"]["inputs"]["clip_name"] = clip_model
