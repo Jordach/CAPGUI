@@ -319,7 +319,8 @@ def get_generation_settings_column(global_ctx, local_ctx):
 			with gr.Accordion(label="Hi-Res Fix / Refining Pass Settings", open=False, elem_id="hi_res_fix"):
 				with gr.Column():
 					local_ctx["hi_res_resize"] = gr.Slider(
-						minimum=0.1, maximum=10, step=0.01, value=1, label="Resize by Multiplier:", interactive=True
+						minimum=0.1, maximum=10, step=0.01, value=1, label="Resize by Multiplier:", interactive=True,
+						info="Raise this value by 0.15-0.2 if denoise isn't strong enough."
 					)
 					local_ctx["hi_res_compression"] = gr.Slider(
 						minimum=32, maximum=80, value=32,
@@ -327,8 +328,8 @@ def get_generation_settings_column(global_ctx, local_ctx):
 						info="Best left at 32 for Hi-Res Fix."
 					)
 					local_ctx["hi_res_denoise"] = gr.Slider(
-						minimum=0, maximum=1, value=0.35, step=0.01, label="Denoise Strength:",
-						info="Best left at 0.35 for optimal Hi-Res Fix usage. Play with this value if necessary."
+						minimum=0, maximum=1, value=0.2, step=0.01, label="Denoise Strength:",
+						info="Best left at 0.2 for optimal Hi-Res Fix usage. Adjust this value when it doesn't behave."
 					)
 				with gr.Row():
 					local_ctx["hi_res_save_original"] = gr.Checkbox(True, label="Save Original Generation?", scale=1)

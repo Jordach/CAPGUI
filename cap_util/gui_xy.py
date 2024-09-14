@@ -55,7 +55,7 @@ def update_dropdown_choices(type):
 			return []
 
 def process_xy_images(
-	pos, neg, steps_c, seed_c, width, height, 
+	tab_source, pos, neg, steps_c, seed_c, width, height, 
 	cfg_c, batch, compression, shift, latent_id, 
 	seed_b, cfg_b, steps_b, stage_b, 
 	stage_c, clip_model, backend, use_hq_stage_a,
@@ -175,7 +175,7 @@ def process_xy_images(
 				toast_text = f"Now Generating {current_item}/{len(x_list)*len(y_list)}: [{xy_x_type}: {x}], [{xy_y_type}: {y}]"
 				gr.Info(toast_text)
 				tmp_img, tmp_info, tmp_dict = cap_util.process_basic_txt2img(
-					pos, neg,
+					tab_source, pos, neg,
 					steps_c, seed_c if seed_c > -1 else random_seed_c,
 					width, height, cfg_c, 1, compression,
 					shift, 0, seed_b if seed_b > -1 else random_seed_c,

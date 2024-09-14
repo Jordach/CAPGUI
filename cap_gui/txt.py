@@ -2,6 +2,7 @@
 import gradio as gr
 import cap_util
 from cap_util import gui_generics, send_to_fns, gui_xy
+from cap_util.wildcards import read_and_apply_wildcards
 from PIL import Image
 
 def txt2img_tab(global_ctx, local_ctx):
@@ -28,36 +29,40 @@ def process_generate_button(
 ):
 	tab_src = "txt2img"
 	if xy_x_type != 'None' or xy_y_type != 'None':
-		return gui_xy.process_xy_images(
-			pos, neg, c_steps, c_seed, width, height,
+		img, info, infodict = gui_xy.process_xy_images(
+			tab_src, pos, neg, c_steps, c_seed, width, height,
 			c_cfg, batch, compression, shift, latent_id,
 			b_seed, b_cfg, b_steps, stage_b, stage_c,
 			clip, backend, use_hq_stage_a, save_images,
 			xy_x_string, xy_x_dropdown, xy_x_type, xy_y_string, xy_y_dropdown, xy_y_type,
 			c_sampler, c_scheduler, b_sampler, b_scheduler, c_rescale,
 		)
-	elif not use_hr_fix:
-		return cap_util.process_basic_txt2img(
-			"txt2img_grid", pos, neg, c_steps, c_seed, width, height,
-			c_cfg, batch, compression, shift, latent_id,
-			b_seed, b_cfg, b_steps, stage_b, stage_c,
-			clip, backend, use_hq_stage_a, save_images,
-			c_sampler, c_scheduler, b_sampler, b_scheduler,
-			c_rescale
-		)
-	else:
+
+		yield img, info, infodict
+	elif use_hr_fix:
+		# Ensure that wildcards compile down into a single instance
+		new_pos, new_neg = read_and_apply_wildcards(pos, neg)
+		
 		images, info, infodict = cap_util.process_basic_txt2img(
-			tab_src, pos, neg, c_steps, c_seed, width, height,
-			c_cfg, 1, compression, shift, latent_id,
+			tab_src, new_pos, new_neg, c_steps, c_seed, width, height,
+			c_cfg, batch, compression, shift, latent_id,
 			b_seed, b_cfg, b_steps, stage_b, stage_c,
 			clip, backend, use_hq_stage_a, hr_save,
 			c_sampler, c_scheduler, b_sampler, b_scheduler,
 			c_rescale
 		)
-		if isinstance(images[0], str):
-			img = Image.open(images[0], mode="r")
-		else:
-			img = images[0]
+
+		b_imgs = []
+		temp_images = []
+		for image in images:
+			if isinstance(image, str):
+				img = Image.open(image, mode="r")
+			else:
+				img = image
+			temp_images.append(img)
+			b_imgs.append(img)
+
+		yield images, info, infodict
 		
 		w, h = int(img.width * hr_resize), int(img.height * hr_resize)
 		step = cap_util.gui_default_settings["gen_size_step"]
@@ -65,19 +70,33 @@ def process_generate_button(
 		h = (h // step) * step
 
 		gr.Info("Running Hi-Res Fix / Refining Pass, this may take a while.")
-		hr_images, hr_info, hr_infodict = cap_util.process_basic_img2img(
-			tab_src, img, False, cap_util.img2img_crop_types[0], pos, neg,
-			c_steps, c_seed, w, h, c_cfg, batch, hr_compression,
-			shift, latent_id, b_seed, b_cfg, b_steps, stage_b, stage_c,
-			clip, backend, hr_denoise, use_hq_stage_a, save_images,
-			c_sampler, c_scheduler, b_sampler, b_scheduler, c_rescale
-		)
+		all_hr = []
+		for b_img in b_imgs:
+			hr_images, hr_info, hr_infodict = cap_util.process_basic_img2img(
+				tab_src, b_img, False, cap_util.img2img_crop_types[0], new_pos, new_neg,
+				c_steps, c_seed, w, h, c_cfg, 1, hr_compression,
+				shift, latent_id, b_seed, b_cfg, b_steps, stage_b, stage_c,
+				clip, backend, hr_denoise, use_hq_stage_a, save_images,
+				c_sampler, c_scheduler, b_sampler, b_scheduler, c_rescale
+			)
+			temp_images.extend(hr_images)
+			all_hr.extend(hr_images)
+			yield temp_images, info, infodict
 
 		all_images = []
 		if hr_show:
-			all_images.append(img)
-		all_images.extend(hr_images)
-		return all_images, info, infodict
+			all_images.extend(images)
+		all_images.extend(all_hr)
+		yield all_images, info, infodict
+	else:
+		yield cap_util.process_basic_txt2img(
+			"txt2img_grid", pos, neg, c_steps, c_seed, width, height,
+			c_cfg, batch, compression, shift, latent_id,
+			b_seed, b_cfg, b_steps, stage_b, stage_c,
+			clip, backend, use_hq_stage_a, save_images,
+			c_sampler, c_scheduler, b_sampler, b_scheduler,
+			c_rescale
+		)
 
 # This sets up the functions like the generate button after elements have been initialised
 def txt2img_tab_post_hook(global_ctx, local_ctx):
