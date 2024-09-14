@@ -341,7 +341,7 @@ def get_generation_settings_column(global_ctx, local_ctx):
 			)
 			with local_ctx["hi_res_accordion"]:
 				with gr.Column():
-					local_ctx["hi_res_image_info"] = gr.Textbox("N/A", label="Hi-Res Fix / Refining Pass Resolution:", lines=1, max_lines=1, interactive=False)
+					local_ctx["hi_res_image_info"] = gr.Textbox("N/A", label="Hi-Res Fix / Refining Pass Image Info:", lines=1, max_lines=1, interactive=False)
 					local_ctx["hi_res_resize"] = gr.Slider(
 						minimum=0.1, maximum=10, step=0.01, value=1, label="Resize by Multiplier:", interactive=True,
 						info="Raise this value by 0.15-0.2 if denoise isn't strong enough."
