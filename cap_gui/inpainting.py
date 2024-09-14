@@ -91,7 +91,7 @@ def create_mask_and_gen(
 	input_image = editor_images["background"]
 
 	images, gen_info, infodict = cap_util.process_basic_inpaint(
-		input_image, mask_image, copy_orig, crop_type,
+		"inpainting", input_image, mask_image, copy_orig, crop_type,
 		pos, neg, steps_c, seed_c, width,
 		height, cfg_c, batch, compression,
 		shift, latent_id, seed_b, cfg_b, steps_b,
@@ -161,7 +161,7 @@ def inpaint_tab_post_hook(global_ctx, local_ctx):
 			local_ctx["stage_c_rescale"], local_ctx["stage_c_min_denoise"]
 		],
 		outputs=[local_ctx["gallery"], local_ctx["gen_info_box"], local_ctx["gen_json"]],
-		show_progress="minimal",
+		show_progress="minimal", concurrency_id="system_queue"
 	)
 
 	local_ctx["send_to_button"].click(

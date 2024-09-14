@@ -625,6 +625,18 @@ def get_basic_img2img():
 		"title": "RescaleCFG"
 		}
 	},
+	"1008": {
+		"inputs": {
+			"width": 256,
+			"height": 256,
+			"compression": 128,
+			"batch_size": 1
+		},
+		"class_type": "StableCascade_EmptyLatentImage",
+		"_meta": {
+			"title": "StableCascade_EmptyLatentImage"
+		}
+	},
 	"save_image_websocket_node": {
 		"inputs": {
 		"images": [
@@ -1023,6 +1035,18 @@ def get_inpaint():
 		"class_type": "RescaleCFG",
 		"_meta": {
 		"title": "RescaleCFG"
+		}
+	},
+	"1008": {
+		"inputs": {
+			"width": 256,
+			"height": 256,
+			"compression": 128,
+			"batch_size": 1
+		},
+		"class_type": "StableCascade_EmptyLatentImage",
+		"_meta": {
+			"title": "StableCascade_EmptyLatentImage"
 		}
 	},
 	"save_image_websocket_node": {

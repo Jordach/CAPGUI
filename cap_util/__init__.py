@@ -630,8 +630,15 @@ def gen_images_websocket(ws, workflow):
 
 	return gallery_images
 
+tab_sources = {
+	"txt2img":      "Text to Image",
+	"txt2img_grid": "Text to Image",
+	"img2img":      "Image to Image",
+	"inpainting":   "Inpainting",
+}
+
 def process_basic_txt2img(
-		pos, neg, steps_c, seed_c, width, height, 
+		tab_source, pos, neg, steps_c, seed_c, width, height, 
 		cfg_c, batch, compression, shift, latent_id, 
 		seed_b, cfg_b, steps_b, stage_b, 
 		stage_c, clip_model, backend, use_hq_stage_a,
@@ -714,14 +721,14 @@ def process_basic_txt2img(
 		gen_info, gen_dict = create_infotext_objects(
 			new_pos, new_neg, width, height, steps_c, workflow["3"]["inputs"]["seed"],
 			cfg_c, c_rescale, c_sampler, c_schedule, batch, compression, shift, steps_b, workflow["33"]["inputs"]["seed"],
-			cfg_b, b_sampler, b_schedule, stage_b, stage_c, clip_model, use_hq_stage_a, "Text to Image", markdown=True
+			cfg_b, b_sampler, b_schedule, stage_b, stage_c, clip_model, use_hq_stage_a, tab_sources[tab_source], markdown=True
 		)
 
 		# Save images to disk if enabled
 		local_paths = []
 		if save_images:
 			for image in gallery_images:
-				file_path = get_image_save_path("txt2img")
+				file_path = get_image_save_path(tab_source)
 				save_image_with_meta(image[0], workflow, json.dumps(gen_dict), file_path)
 				local_paths.append(file_path)
 
@@ -735,7 +742,7 @@ def process_basic_txt2img(
 		raise gr.Error("CAP Feature Unavailable.")
 
 def process_basic_img2img(
-		input_image, copy_orig, crop_type, pos, neg, 
+		tab_source, input_image, copy_orig, crop_type, pos, neg, 
 		steps_c, seed_c, width, height, cfg_c, 
 		batch, compression, shift, latent_id, 
 		seed_b, cfg_b, steps_b, 
@@ -763,23 +770,23 @@ def process_basic_img2img(
 
 	workflow["95"]["inputs"]["compression"] = compression
 	# Handle Image Processing chain:
-	output_width = 0
-	output_height = 0
+	output_width = width
+	output_height = height
 	# Handle resize only:
 	if crop_type == img2img_crop_types[0]:
-		output_width = (width // compression) * compression
-		output_height = (height // compression) * compression
+		# output_width = (width // compression) * compression
+		# output_height = (height // compression) * compression
 		resized_image = input_image.resize((output_width, output_height), Image.Resampling.LANCZOS)
 		workflow["100"]["inputs"]["base64_image"] = image_to_b64(resized_image)
 	# Resize and Crop to latent pixels:
 	elif crop_type == img2img_crop_types[1]:
-		output_width = (width // compression) * compression
-		output_height = (height // compression) * compression
+		# output_width = (width // compression) * compression
+		# output_height = (height // compression) * compression
 		resized_image = input_image.resize((output_width, output_height), Image.Resampling.LANCZOS)
 		workflow["100"]["inputs"]["base64_image"] = image_to_b64(resized_image)
 	else:
-		output_width = (width // compression) * compression
-		output_height = (height // compression) * compression
+		# output_width = (width // compression) * compression
+		# output_height = (height // compression) * compression
 		resized_image = input_image.resize((output_width, output_height), Image.Resampling.LANCZOS)
 		workflow["100"]["inputs"]["base64_image"] = image_to_b64(resized_image)
 
@@ -836,7 +843,7 @@ def process_basic_img2img(
 		gen_info, gen_dict = create_infotext_objects(
 			new_pos, new_neg, width, height, steps_c, workflow["3"]["inputs"]["seed"],
 			cfg_c, c_rescale, c_sampler, c_schedule, batch, compression, shift, steps_b, workflow["33"]["inputs"]["seed"], 
-			cfg_b, b_sampler, b_schedule, stage_b, stage_c, clip_model, use_hq_stage_a, "Image to Image", markdown=True
+			cfg_b, b_sampler, b_schedule, stage_b, stage_c, clip_model, use_hq_stage_a, tab_sources[tab_source], markdown=True
 		)
 
 		local_paths = []
@@ -847,7 +854,7 @@ def process_basic_img2img(
 			if copy_orig:
 				total_images += 1
 			for image in gallery_images:
-				file_path = get_image_save_path("img2img")
+				file_path = get_image_save_path(tab_source)
 				save_image_with_meta(image[0], workflow, json.dumps(gen_dict), file_path)
 				local_paths.append(file_path)
 
@@ -859,7 +866,7 @@ def process_basic_img2img(
 		return gallery_images if not save_images else local_paths, gen_info, json.dumps(gen_dict)
 
 def process_basic_inpaint(
-		input_image, mask_image, copy_orig, crop_type, 
+		tab_source, input_image, mask_image, copy_orig, crop_type, 
 		pos, neg, steps_c, seed_c, width, 
 		height, cfg_c, batch, compression, 
 		shift, latent_id, seed_b, cfg_b, steps_b, 
@@ -886,33 +893,37 @@ def process_basic_inpaint(
 	workflow["3"]["inputs"]["scheduler"]    = c_schedule
 
 	# Handle Image Processing chain:
-	output_width = 0
-	output_height = 0
+	output_width = width
+	output_height = height
 	# Handle resize only:
 	if crop_type == img2img_crop_types[0]:
-		output_width = (width // compression) * compression
-		output_height = (height // compression) * compression
-
+		# output_width = (width // compression) * compression
+		# output_height = (height // compression) * compression
 		resized_image = input_image.resize((output_width, output_height), Image.Resampling.LANCZOS)
 		resized_mask = mask_image.resize((output_width, output_height), Image.Resampling.LANCZOS)
 		workflow["129"]["inputs"]["base64_image"] = image_to_b64(resized_image)
 		workflow["130"]["inputs"]["base64_image"] = image_to_b64(resized_mask)
 	# Resize and Crop to latent pixels:
 	elif crop_type == img2img_crop_types[1]:
-		output_width = (width // compression) * compression
-		output_height = (height // compression) * compression
+		# output_width = (width // compression) * compression
+		# output_height = (height // compression) * compression
 		resized_image = input_image.resize((output_width, output_height), Image.Resampling.LANCZOS)
 		resized_mask = mask_image.resize((output_width, output_height), Image.Resampling.LANCZOS)
 		workflow["129"]["inputs"]["base64_image"] = image_to_b64(resized_image)
 		workflow["130"]["inputs"]["base64_image"] = image_to_b64(resized_mask)
 	# Bugfix for Gradio not initialising a dropdown
 	else:
-		output_width = (width // compression) * compression
-		output_height = (height // compression) * compression
+		# output_width = (width // compression) * compression
+		# output_height = (height // compression) * compression
 		resized_image = input_image.resize((output_width, output_height), Image.Resampling.LANCZOS)
 		resized_mask = mask_image.resize((output_width, output_height), Image.Resampling.LANCZOS)
 		workflow["129"]["inputs"]["base64_image"] = image_to_b64(resized_image)
 		workflow["130"]["inputs"]["base64_image"] = image_to_b64(resized_mask)
+
+	# Stage B bugfix:
+	workflow["1008"]["inputs"]["width"] = output_width
+	workflow["1008"]["inputs"]["height"] = output_height
+	workflow["1008"]["inputs"]["compression"] = compression
 
 	# CLIP and Stage C UNET:
 	workflow["74"]["inputs"]["unet_name"] = stage_c
@@ -967,7 +978,7 @@ def process_basic_inpaint(
 		gen_info, gen_dict = create_infotext_objects(
 			new_pos, new_neg, width, height, steps_c, workflow["3"]["inputs"]["seed"],
 			cfg_c, c_rescale, c_sampler, c_schedule, batch, compression, shift, steps_b, workflow["33"]["inputs"]["seed"],
-			cfg_b, b_sampler, b_schedule, stage_b, stage_c, clip_model, use_hq_stage_a, "Inpainting", markdown=True
+			cfg_b, b_sampler, b_schedule, stage_b, stage_c, clip_model, use_hq_stage_a, tab_sources[tab_source], markdown=True
 		)
 
 		local_paths = []
@@ -981,7 +992,7 @@ def process_basic_inpaint(
 				total_images += 2
 
 			for image in gallery_images:
-				file_path = get_image_save_path("inpainting")
+				file_path = get_image_save_path(tab_source)
 				save_image_with_meta(image[0], workflow, json.dumps(gen_dict), file_path)
 				local_paths.append(file_path)
 

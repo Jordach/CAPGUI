@@ -314,10 +314,28 @@ def get_generation_settings_column(global_ctx, local_ctx):
 
 	with gr.Accordion("Extras:", open=False, elem_id="extra_settings"):
 		local_ctx["use_stage_a_hq"] = gr.Checkbox(True, label="Use High Quality Decoder?", info="Uses a custom finetune of Stage A to decode latents with less overall blur.")
-		with gr.Accordion(label="X/Y Settings:", open=False, elem_id="base_settings") as xy_block:
-			gui_xy(global_ctx, local_ctx)
-		
-		gr.Markdown("To be continued")
+		if local_ctx["__tab_name__"] == "txt2img":
+			local_ctx["hi_res_enabled"] = gr.Checkbox(False, label="Enable Hi-Res Fix / Refining Pass?")
+			with gr.Accordion(label="Hi-Res Fix / Refining Pass Settings", open=False, elem_id="hi_res_fix"):
+				with gr.Column():
+					local_ctx["hi_res_resize"] = gr.Slider(
+						minimum=0.1, maximum=10, step=0.01, value=1, label="Resize by Multiplier:", interactive=True
+					)
+					local_ctx["hi_res_compression"] = gr.Slider(
+						minimum=32, maximum=80, value=32,
+						step=1, label="Second Pass Compression:",
+						info="Best left at 32 for Hi-Res Fix."
+					)
+					local_ctx["hi_res_denoise"] = gr.Slider(
+						minimum=0, maximum=1, value=0.35, step=0.01, label="Denoise Strength:",
+						info="Best left at 0.35 for optimal Hi-Res Fix usage. Play with this value if necessary."
+					)
+				with gr.Row():
+					local_ctx["hi_res_save_original"] = gr.Checkbox(True, label="Save Original Generation?", scale=1)
+					local_ctx["hi_res_show_original"] = gr.Checkbox(True, label="Display Original Generation?", scale=1)
+			# This will be enabled for others when ready for other tabs, else it lives under txt2img
+			with gr.Accordion(label="X/Y Settings:", open=False, elem_id="base_settings") as xy_block:
+				gui_xy(global_ctx, local_ctx)
 	
 	# Make the swapping of aspect ratios universal across tabs
 	local_ctx["stage_c_swap_ratio"].click(
