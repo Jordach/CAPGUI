@@ -75,10 +75,11 @@ def get_autocomplete_dropdown(global_ctx):
 	return dropdown
 
 def save_auto_csv_changes(autocomplete):
-	# Don't update the settings_json field if we're just updating the list
 	if autocomplete == "updating_the.csv":
 		csvs = cap_util.search_for_csvs()
-		return gr.Textbox(), gr.Dropdown(choices=csvs, value=cap_util.gui_default_settings["tac_tagFile"])
+		# Reloading the CSVs where it may switch to the new one without loading it has been fixed
+		cap_util.save_config(backup=False)
+		return cap_util.create_settings_json_for_browser(), gr.Dropdown(choices=csvs, value=cap_util.gui_default_settings["tac_tagFile"])
 
 	cap_util.gui_default_settings["tac_tagFile"] = autocomplete
 	cap_util.save_config(backup=False)
